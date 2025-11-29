@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'store.apps.StoreConfig',
     'contact.apps.ContactConfig',
     'orders.apps.OrdersConfig',
-    'notifications.apps.NotificationsConfig',
+    'notification.apps.NotificationConfig',
+    'users.apps.UsersConfig',
+    'aboutus.apps.AboutusConfig',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,4 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'users.CustomUser'
