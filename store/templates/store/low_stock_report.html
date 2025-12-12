@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rapport de Stock Critique{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <h1 class="mb-4 fw-bold text-danger"><i class="fas fa-exclamation-triangle me-2"></i> Stock Critique : Alerte Commande</h1>
+            <p class="lead text-muted">
+                Cette liste présente tous les produits dont la quantité en stock est **inférieure ou égale** à leur seuil critique de commande.
+            </p>
+
+            {% if products_to_order %}
+            
+                <div class="alert alert-danger shadow-sm" role="alert">
+                    <h4 class="alert-heading"><i class="fas fa-truck-loading me-2"></i> Action Immédiate Requise !</h4>
+                    Vous devez commander ces **{{ products_to_order|length }}** articles pour éviter une rupture de stock imminente.
+                </div>
+                
+                <div class="card shadow">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Produit</th>
+                                        <th scope="col" class="text-center">Catégorie</th>
+                                        <th scope="col" class="text-center">Stock Actuel</th>
+                                        <th scope="col" class="text-center">Seuil Critique</th>
+                                        <th scope="col" class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in products_to_order %}
+                                    <tr class="{% if product.stock == 0 %}table-danger{% endif %}">
+                                        <th scope="row">{{ forloop.counter }}</th>
+                                        <td>
+                                            <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="text-decoration-none fw-bold">
+                                                {{ product.product_name }}
+                                            </a>
+                                        </td>
+                                        <td class="text-center">{{ product.category.name }}</td>
+                                        <td class="text-center fw-bold">
+                                            {% if product.stock == 0 %}
+                                                <span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i> RUPTURE</span>
+                                            {% else %}
+                                                {{ product.stock }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center text-muted">{{ product.reorder_point }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'admin:store_product_change' product.pk %}" target="_blank" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-plus me-1"></i> Réapprovisionner
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="alert alert-success mt-4">
+                    <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i> Bravo !</h4>
+                    <p>Aucun produit n'a atteint son seuil critique. Votre stock est en bonne santé.</p>
+                </div>
+            {% endif %}
+            
+            <div class="mt-5 text-center">
+                <a href="{% url 'dashboard:stock_management' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i> Retour à la gestion de stock</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

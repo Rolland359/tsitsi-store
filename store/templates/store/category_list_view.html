@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Tsitsi Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <h1 class="display-5 fw-bold mb-5 text-center">
+        <i class="fas fa-sitemap me-2 text-primary"></i> Toutes Nos Catégories
+    </h1>
+    
+    <p class="lead text-center text-muted mb-5">
+        Explorez notre collection de **{{ total_categories }}** catégories et trouvez facilement ce que vous cherchez.
+    </p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        
+        {% for category in categories %}
+        <div class="col">
+            <a href="{{ category.get_url }}" class="text-decoration-none">
+                <div class="card h-100 category-card-item shadow-sm border-0 transition-hover">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-folder fa-2x text-warning me-3"></i> 
+                            <div>
+                                <h3 class="card-title fw-bold text-dark mb-0">{{ category.name }}</h3>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted flex-grow-1">
+                            {% if category.description %}
+                                {{ category.description|truncatechars:100 }}
+                            {% else %}
+                                Découvrez tous les produits de notre catégorie {{ category.name }}.
+                            {% endif %}
+                        </p>
+                        
+                        <div class="mt-auto pt-2 border-top">
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-cubes me-1"></i> {{ category.products.count }} Article{% if category.products.count > 1 %}s{% endif %}
+                            </span>
+                            <span class="float-end text-primary fw-bold">
+                                Parcourir <i class="fas fa-arrow-right ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center mt-4">
+                <i class="fas fa-exclamation-triangle me-2"></i> Aucune catégorie n'est actuellement disponible dans la boutique.
+            </div>
+        </div>
+        {% endfor %}
+        
+    </div>
+    
+</div>
+
+<style>
+    /* Style CSS simple pour l'effet de survol */
+    .transition-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        border-color: var(--bs-primary) !important;
+    }
+</style>
+{% endblock %}

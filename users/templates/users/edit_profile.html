@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="display-5 fw-bold mb-4">
+        <i class="fas fa-edit me-3 text-primary"></i> {{ title }}
+    </h1>
+
+    {% include 'includes/alerts.html' %} 
+
+    <div class="card shadow-lg p-4">
+        <h4 class="mb-4 text-primary">Informations de base du Compte</h4>
+        
+        <form method="POST" action="{% url 'users:edit_profile' %}">
+            {% csrf_token %}
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">{{ user_form.first_name.label }}</label>
+                    {{ user_form.first_name }}
+                    {% for error in user_form.first_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ user_form.last_name.label }}</label>
+                    {{ user_form.last_name }}
+                    {% for error in user_form.last_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ user_form.email.label }}</label>
+                    {{ user_form.email }}
+                    {% for error in user_form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ user_form.phone_number.label }}</label>
+                    {{ user_form.phone_number }}
+                    {% for error in user_form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <hr class="my-4">
+            
+            <h4 class="mb-4 text-primary">Adresse de Livraison par Défaut</h4>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">{{ profile_form.address_line_1.label }}</label>
+                    {{ profile_form.address_line_1 }}
+                    {% for error in profile_form.address_line_1.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ profile_form.address_line_2.label }} (Optionnel)</label>
+                    {{ profile_form.address_line_2 }}
+                    {% for error in profile_form.address_line_2.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ profile_form.city.label }}</label>
+                    {{ profile_form.city }}
+                    {% for error in profile_form.city.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ profile_form.state.label }}</label>
+                    {{ profile_form.state }}
+                    {% for error in profile_form.state.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ profile_form.country.label }}</label>
+                    {{ profile_form.country }}
+                    {% for error in profile_form.country.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                
+                <div class="col-12">
+                    <label class="form-label">{{ profile_form.profile_picture.label }}</label>
+                    {{ profile_form.profile_picture }}
+                    {% for error in profile_form.profile_picture.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-circle me-2"></i> Sauvegarder les Modifications
+                </button>
+            </div>
+        </form>
+        </div>
+</div>
+{% endblock %}

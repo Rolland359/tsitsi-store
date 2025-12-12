@@ -47,6 +47,11 @@ INSTALLED_APPS = [
     'notification.apps.NotificationConfig',
     'users.apps.UsersConfig',
     'aboutus.apps.AboutusConfig',
+    'dashboard.apps.DashboardConfig',
+    'django.contrib.humanize',
+
+    # AJOUTER DRF
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +77,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
+                'cart.context_processors.counter',
             ],
         },
     },
@@ -129,8 +136,38 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static'), ]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# 4. Configuration des Médias (Pour les Images Téléversées - TRÈS IMPORTANT pour les PRODUITS)
+# Les images des produits sont des fichiers Média, pas Statiques.
+# L'URL utilisée dans le navigateur pour accéder aux fichiers média (ex: /media/photos/products/tshirt.jpg)
+MEDIA_URL = '/media/'
+
+# Le chemin physique où Django stocke les fichiers média (téléchargés par l'utilisateur/admin)
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
+
+# Email Configuration (Utilisez un service réel pour la production)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+DEFAULT_FROM_EMAIL = 'support@tsitsistore.com'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Rediriger l'utilisateur vers 'users:my_account' après une connexion réussie
+LOGIN_REDIRECT_URL = 'users:my_account'
+
+# Rediriger l'utilisateur vers 'users:login' s'il essaie d'accéder à une page @login_required
+LOGIN_URL = 'users:login'

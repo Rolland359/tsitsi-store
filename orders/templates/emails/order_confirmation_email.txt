@@ -1,0 +1,29 @@
+Confirmation de Commande N° {{ order.order_number }}
+
+Bonjour {{ order.full_name }},
+
+Merci pour votre commande passée le {{ order.created|date:"d F Y" }}.
+
+Détails de la Commande:
+------------------------------------------
+Produit | Quantité | Sous-Total
+------------------------------------------
+{% for item in order_items %}
+{{ item.product.product_name }} | {{ item.quantity }} | {{ item.sub_total|floatformat:2 }} MGA
+{% endfor %}
+------------------------------------------
+Sous-Total: {{ sub_total|floatformat:2 }} MGA
+Taxes: {{ order.tax|floatformat:2 }} MGA
+TOTAL PAYÉ: {{ order.order_total|floatformat:2 }} MGA
+
+Adresse de Livraison:
+{{ order.full_name }}
+{{ order.address_line_1 }}
+{% if order.address_line_2 %}{{ order.address_line_2 }}{% endif %}
+{{ order.city }}, {{ order.state }}, {{ order.country }}
+Téléphone: {{ order.phone }}
+
+Vous recevrez un autre email dès l'expédition.
+
+Cordialement,
+L'équipe Tsitsi Store

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if current_category %}{{ current_category.name }}{% else %}Catalogue{% endif %} - Tsitsi Store
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <h1 class="display-5 fw-bold mb-4 text-center">
+        {% if current_category %}
+            {{ current_category.name }}
+        {% else %}
+            Tout le Catalogue
+        {% endif %}
+    </h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row mb-4 bg-light p-3 rounded shadow-sm align-items-center">
+        
+        <div class="col-md-3">
+            <p class="mb-0 fw-bold">
+                <i class="fas fa-cubes me-2"></i> {{ products_count }} Produit{% if products_count > 1 %}s{% endif %} trouvé{% if products_count > 1 %}s{% endif %}
+            </p>
+        </div>
+        
+        <div class="col-md-5 offset-md-4">
+            <label for="sort-select" class="form-label visually-hidden">Trier par</label>
+            <select id="sort-select" class="form-select form-select-sm" onchange="window.location.href = this.value;">
+                <option value="{% url 'store:catalogue' %}" {% if not request.GET.sort %}selected{% endif %}>Trier par : Pertinence</option>
+                <option value="?sort=price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Prix croissant</option>
+                <option value="?sort=price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Prix décroissant</option>
+                <option value="?sort=latest" {% if request.GET.sort == 'latest' %}selected{% endif %}>Nouveautés</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="row">
+        
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold bg-primary text-white"><i class="fas fa-list-alt me-2"></i> Catégories</div>
+                <ul class="list-group list-group-flush">
+                    <a href="{% url 'store:catalogue' %}" class="list-group-item list-group-item-action {% if not current_category %}active{% endif %}">
+                        Tous les articles
+                    </a>
+                    
+                    {% for category in categories %}
+                        <a href="{{ category.get_url }}" class="list-group-item list-group-item-action {% if current_category.slug == category.slug %}active{% endif %}">
+                            {{ category.name }}
+                            <span class="badge bg-secondary rounded-pill float-end">
+                                {{ category.products.count }}
+                            </span>
+                        </a>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded text-center small text-muted">
+                Filtres additionnels (prix, taille) à implémenter ici.
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+                
+                {% for product in page_obj %}
+                <div class="col">
+                    <div class="card h-100 product-item border-0 shadow-sm">
+                        <a href="{{ product.get_url }}" class="text-decoration-none text-dark">
+                            <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.product_name }}">
+                            <div class="card-body p-3">
+                                <h6 class="card-title fw-bold text-truncate">{{ product.product_name }}</h6>
+                                <p class="small text-muted mb-1">{{ product.category.name }}</p>
+                                
+                                <div class="d-flex align-items-center mb-2">
+                                    {% with avg_rating=product.get_average_rating %}
+                                    {% with reviews_count=product.reviewandrating_set.count %}
+                                    
+                                        <span class="text-warning me-2">
+                                            {% for i in "1234567"|make_list %}
+                                                <i class="fas fa-star" 
+                                                   style="font-size: 0.8rem; 
+                                                   {% if avg_rating|floatformat:"0"|add:0 >= forloop.counter %}
+                                                       color: #ffc107; /* Jaune vif */
+                                                   {% else %}
+                                                       color: #e9ecef; /* Gris clair */
+                                                   {% endif %}">
+                                                </i>
+                                            {% endfor %}
+                                        </span>
+                                        
+                                        <span class="small text-muted me-3">
+                                            ({{ avg_rating|floatformat:1 }} / 7) - ({{ reviews_count }} avis)
+                                        </span>
+                                    
+                                    {% endwith %}
+                                    {% endwith %}
+                                    
+                                    <span class="small text-muted">
+                                        <i class="fas fa-shopping-bag ms-2 me-1"></i> {{ product.get_times_purchased }} achats
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bolder text-success">{{ product.price }} MGA</span>
+                                    
+                                    {% if product.stock <= product.reorder_point and product.stock > 0 %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i> Stock Faible</span>
+                                    {% elif product.stock == 0 %}
+                                        <span class="badge bg-danger">Rupture</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        <div class="card-footer bg-white border-top-0 p-3 pt-0 text-center">
+                             {% if product.stock > 0 %}
+                                 <a href="{% url 'cart:add_cart' product.id %}" class="btn btn-sm btn-primary w-100">
+                                     <i class="fas fa-cart-plus me-1"></i> Ajouter
+                                 </a>
+                             {% else %}
+                                 <button class="btn btn-sm btn-secondary w-100" disabled>Indisponible</button>
+                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center mt-5" role="alert">
+                        <i class="fas fa-info-circle me-2"></i> Désolé, aucun produit ne correspond à votre recherche dans cette catégorie.
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+            
+            {% if page_obj.has_other_pages %}
+                <div class="d-flex justify-content-center mt-5">
+                    <nav aria-label="Pagination produits">
+                        <ul class="pagination">
+                            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                                <a class="page-link" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}#{% endif %}">Précédent</a>
+                            </li>
+                            
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li class="page-item active" aria-current="page"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                                <a class="page-link" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}#{% endif %}">Suivant</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

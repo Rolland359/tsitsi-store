@@ -1,6 +1,160 @@
-{%extends 'base.html'%}
-{%block title%}About Us - Tsitsi Store{%endblock%}
+{% extends 'base.html' %}
+{% load static %}
 
-{%block content%}
-test
-{%endblock%}
+{% block title %}About Us - Tsitsi Store{% endblock %}
+
+{% block content %}
+    <style>
+        /* Styles personnalisés pour cette page */
+        .hero-section {
+            padding: 100px 0;
+            background-color: #f8f9fa; /* bg-light */
+        }
+        .mission-vision-card {
+            min-height: 200px;
+        }
+        .team-member {
+            transition: transform 0.3s ease;
+        }
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+
+    <header class="hero-section text-center">
+        <div class="container">
+            <p class="text-primary fw-bold mb-2">NOTRE HISTOIRE COMMENCE ICI</p>
+            <h1 class="display-3 fw-bolder mb-3">Qui Sommes-Nous ?</h1>
+            <p class="lead text-muted mx-auto" style="max-width: 800px;">
+                Chez **Tsitsi Store**, nous croyons que la simplicité est la clé de la réussite. Depuis [Année], notre mission est de [résumer votre service/produit] pour aider [votre public cible] à atteindre [leur objectif].
+            </p>
+            <a href="#mission" class="btn btn-primary btn-lg mt-3">Découvrez Nos Valeurs <i class="fas fa-chevron-down ms-2"></i></a>
+        </div>
+    </header>
+
+    <section id="mission" class="py-5">
+        <div class="container">
+            <div class="row text-center g-4">
+                
+                <div class="col-md-4">
+                    <div class="card p-4 mission-vision-card shadow-sm border-primary">
+                        <i class="fas fa-bullseye fa-3x text-primary mb-3"></i>
+                        <h3 class="h5 card-title">Notre Mission</h3>
+                        <p class="card-text">Nous fournissons des solutions numériques **accessibles et intuitives** pour les PME, éliminant les barrières technologiques.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card p-4 mission-vision-card shadow-sm border-success">
+                        <i class="fas fa-rocket fa-3x text-success mb-3"></i>
+                        <h3 class="h5 card-title">Notre Vision</h3>
+                        <p class="card-text">Devenir la référence mondiale pour l'autonomisation digitale des entrepreneurs d'ici 2030.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card p-4 mission-vision-card shadow-sm border-info">
+                        <i class="fas fa-handshake fa-3x text-info mb-3"></i>
+                        <h3 class="h5 card-title">Nos Valeurs</h3>
+                        <ul class="list-unstyled text-start mx-auto" style="max-width: fit-content;">
+                            <li><i class="fas fa-check-circle text-primary me-2"></i> Transparence totale</li>
+                            <li><i class="fas fa-check-circle text-primary me-2"></i> Innovation constante</li>
+                            <li><i class="fas fa-check-circle text-primary me-2"></i> Orientation Client</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5 fw-bold">Notre Parcours</h2>
+            <div class="row">
+                <div class="col-lg-10 mx-auto">
+                    <div class="p-4 border-start border-primary border-4 mb-4 bg-white shadow-sm">
+                        <span class="badge bg-primary mb-2">2018</span>
+                        <h4 class="h5">La Fondation</h4>
+                        <p class="text-muted mb-0">Lancement du projet par [Nom du fondateur], visant à créer une plateforme e-commerce simple.</p>
+                    </div>
+                    <div class="p-4 border-start border-primary border-4 mb-4 bg-white shadow-sm">
+                        <span class="badge bg-primary mb-2">2020</span>
+                        <h4 class="h5">Lancement du Tsitsi Store</h4>
+                        <p class="text-muted mb-0">Sortie de la version beta et acquisition des 500 premiers clients.</p>
+                    </div>
+                    <div class="p-4 border-start border-primary border-4 bg-white shadow-sm">
+                        <span class="badge bg-primary mb-2">2023</span>
+                        <h4 class="h5">Partenariat Clé</h4>
+                        <p class="text-muted mb-0">Signature d'un partenariat majeur avec [Nom du Partenaire] pour étendre nos offres.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 fw-bold">Rencontrez l'Équipe Derrière Tsitsi Store</h2>
+            <div class="row text-center g-4">
+                
+                <div class="col-md-4">
+                    <div class="team-member">
+                        <img src="{% static 'img/photo_ceo.jpg' %}" class="rounded-circle mb-3 shadow" alt="Photo CEO" width="150" height="150">
+                        <h5 class="fw-bold">Prénom Nom</h5>
+                        <p class="text-primary mb-1">CEO & Fondateur</p>
+                        <p class="small text-muted">Le cerveau derrière la vision, s'assurant que Tsitsi Store reste innovant.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="team-member">
+                        <img src="{% static 'img/photo_tech.jpg' %}" class="rounded-circle mb-3 shadow" alt="Photo Technique" width="150" height="150">
+                        <h5 class="fw-bold">Maminirina Rolland ANDRIANAVALONA</h5>
+                        <p class="text-primary mb-1">Responsable Technique</p>
+                        <p class="small text-muted">Garantit la performance et la sécurité de notre plateforme.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="team-member">
+                        <img src="{% static 'img/photo_support.jpg' %}" class="rounded-circle mb-3 shadow" alt="Photo Support" width="150" height="150">
+                        <h5 class="fw-bold">Prénom Nom</h5>
+                        <p class="text-primary mb-1">Chef du Support Client</p>
+                        <p class="small text-muted">Notre porte-parole de l'utilisateur, au service de la satisfaction.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-dark text-white py-5">
+        <div class="container">
+            <h2 class="text-center mb-4 fw-bold">Ce que Disent Nos Clients</h2>
+            <div class="row text-center g-4">
+                <div class="col-md-6">
+                    <blockquote class="blockquote bg-light p-4 rounded text-dark shadow-sm">
+                        <p class="mb-0 fst-italic">"Tsitsi Store a transformé la gestion de notre inventaire. Un outil indispensable !"</p>
+                        <footer class="blockquote-footer text-end mt-2">Jean Dubois, <cite title="Source Title">Client PME</cite></footer>
+                    </blockquote>
+                </div>
+                <div class="col-md-6">
+                    <blockquote class="blockquote bg-light p-4 rounded text-dark shadow-sm">
+                        <p class="mb-0 fst-italic">"Le support client est réactif et efficace. Nous sommes très satisfaits."</p>
+                        <footer class="blockquote-footer text-end mt-2">Sophie Martin, <cite title="Source Title">Entrepreneur</cite></footer>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 text-center">
+        <div class="container">
+            <h2 class="fw-bold">Prêt à Rejoindre l'Aventure Tsitsi Store ?</h2>
+            <p class="lead mb-4">Contactez-nous pour découvrir comment nous pouvons optimiser votre activité.</p>
+            <a href="#" class="btn btn-primary btn-lg"><i class="fas fa-arrow-right me-2"></i> Démarrer Maintenant</a>
+        </div>
+    </section>
+
+{% endblock %}

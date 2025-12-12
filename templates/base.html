@@ -1,18 +1,21 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{%block title%}Document{% endblock %}</title>
+    <title>{% block title %}Tsitsi Store{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/c1f9ec2aef.js" crossorigin="anonymous"></script>
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
         <div class="container-fluid" style="height: 8vh;">
         <H1 class= "me-5">
-            <a class="navbar-brand" href="#">
-                <i class="fa-solid fa-bag-shopping me-2"></i> Tsitsi Store
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fa-solid fa-bag-shopping me-2 text-warning"></i> Tsitsi Store
             </a>
         </H1>
             
@@ -21,36 +24,54 @@
             </button>
             
             <div class="collapse navbar-collapse ms-3" id="navbarNav">
+                
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-house me-1"></i> Accueil</a>
+                        <a class="nav-link" href="{% url 'home' %}"><i class="fa-solid fa-house me-1"></i> Accueil</a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-shop me-1"></i> Boutique</a>
+                        <a class="nav-link" href="{% url 'store:catalogue' %}"><i class="fa-solid fa-shop me-1"></i> Boutique</a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-table-cells-large me-1"></i> Catégories</a>
+                        <a class="nav-link" href="{% url 'store:category_list' %}"><i class="fa-solid fa-table-cells-large me-1"></i> Catégories</a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-address-card me-1"></i> À Propos</a>
+                        <a class="nav-link" href="{%url 'aboutus:about' %}"><i class="fa-solid fa-address-card me-1"></i> À Propos</a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-envelope me-1"></i> Contact</a>
+                        <a class="nav-link" href="{% url 'contact:contact_us' %}"><i class="fa-solid fa-envelope me-1"></i> Contact</a>
                     </li>
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
+                    <form action="{% url 'store:search' %}" method="GET" class="d-flex me-3">
+                        <input 
+                            class="form-control me-2" 
+                            type="search" 
+                            placeholder="Rechercher un produit..." 
+                            aria-label="Search" 
+                            name="keyword" 
+                            required
+                        >
+                        <button class="btn btn-outline-success" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
                     
                     <li class="nav-item me-3">
-                        <a class="nav-link position-relative" href="#">
+                        <a class="nav-link position-relative" href="{% url 'cart:cart_detail' %}">
                             <i class="fa-solid fa-cart-shopping fa-lg"></i> Panier
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                0 
+                                {% if cart_count > 0 %}
+                                    {{ cart_count }}
+                                {% else %}
+                                    0 
+                                {% endif %}
                             </span>
                         </a>
                     </li>
@@ -58,22 +79,24 @@
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-user me-1"></i> {{ user.first_name|default:user.username }}
+                            <i class="fa-solid fa-user me-1 text-info"></i> {{ user.first_name|default:user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Mon Compte</a></li>
-                            <li><a class="dropdown-item" href="#">Mes Commandes</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:my_account' %}"><i class="fas fa-cog me-2"></i> Mon Compte</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:my_account' %}#order-history"><i class="fas fa-box me-2"></i> Mes Commandes</a></li>
+                            
                             {% if user.is_staff %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#">Tableau de Bord 🛡️</a></li>
+                                <li><a class="dropdown-item text-danger fw-bold" href="{% url 'dashboard:main_dashboard' %}"><i class="fas fa-shield-alt me-2"></i> Tableau de Bord 🛡️</a></li>
                             {% endif %}
+                            
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Se Déconnecter</a></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'users:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Se Déconnecter</a></li>
                         </ul>
                     </li>
                     {% else %}
-                        <li class="nav-item">
-                        <a class="nav-link btn btn-primary text-white" href="#">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white" href="{% url 'users:login' %}">
                             <i class="fa-solid fa-right-to-bracket me-1"></i> Connexion / Inscription
                         </a>
                     </li>
@@ -84,14 +107,25 @@
             
         </div>
     </nav>
+    
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <main class="flex-grow-1">
-    {%block content%}
-    {% endblock%}
+    {% block content %}
+    {% endblock %}
     </main>
 
 
-
-    <footer class="bg-dark text-white pt-2 pb-2 mt-2">
+    <footer class="bg-dark text-white pt-4 pb-2 mt-4 shadow-lg">
         <div class="container text-center text-md-start">
             <div class="row text-center text-md-start">
                 
@@ -108,22 +142,14 @@
                 <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
                     <h5 class="text-uppercase mb-2 font-weight-bold text-info">Liens Utiles</h5>
                     <div class="ms-4 text-md-start text-center">
-                        <p>
-                            <a href="#" class="text-white" style="text-decoration: none;">Boutique</a>
-                        </p>
-                        <p>
-                            <a href="#" class="text-white" style="text-decoration: none;">À Propos</a>
-                        </p>
-                        <p>
-                            <a href="#" class="text-white" style="text-decoration: none;">Contact</a>
-                        </p>
+                        <p><a href="{% url 'store:catalogue' %}" class="text-white" style="text-decoration: none;">Boutique</a></p>
+                        <p><a href="{%url 'aboutus:about' %}" class="text-white" style="text-decoration: none;">À Propos</a></p>
+                        <p><a href="{% url 'contact:contact_us' %}" class="text-white" style="text-decoration: none;">Contact</a></p>
+                        
                         {% if user.is_authenticated %}
-                        <p>
-                            <a href="#" class="text-white" style="text-decoration: none;">Mes Commandes</a>
-                        </p>
+                        <p><a href="{% url 'users:my_account' %}#order-history" class="text-white" style="text-decoration: none;">Mes Commandes</a></p>
                         {% endif %}
                     </div>
-
                 </div>
                 
                 <div class="col-md-4 col-lg-3 col-xl-2 mx-auto mt-3">
@@ -161,6 +187,8 @@
             
         </div>
     </footer>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
