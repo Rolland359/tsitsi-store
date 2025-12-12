@@ -177,9 +177,9 @@
                         <div class="d-flex mb-4 border-bottom pb-3">
                             
                             <div class="flex-shrink-0">
-                                {% if review.user.profile_picture.url %}
+                                {% if review.user.profile.profile_picture %}
                                     <img 
-                                        src="{{ review.user.profile_picture.url }}" 
+                                        src="{{ review.user.profile.profile_picture.url }}" 
                                         alt="{{ review.user.username }}" 
                                         class="rounded-circle me-3" 
                                         style="width: 40px; height: 40px; object-fit: cover;"

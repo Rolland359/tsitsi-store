@@ -12,7 +12,7 @@
             1. Tester si la photo de profil existe et a une URL.
             (Assurez-vous que l'objet 'userprofile' est accessible via user.userprofile)
         {% endcomment %}
-        {% if user.profile.profile_picture.url %}
+        {% if user.profile.profile_picture %}
             
             <img src="{{ user.profile.profile_picture.url }}" 
                 alt="{{ user.username }} profile picture" 

@@ -21,7 +21,7 @@ def contact_view(request):
                     subject=f"Tsitsi Store - Nouveau Contact: {sujet}",
                     message=email_body,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=['andrianavalonarolland@gmail.com'], # N'oubliez pas de le remplacer
+                    recipient_list=['tsitsistore.1138@gmail.com'], # N'oubliez pas de le remplacer
                     fail_silently=False,
                 )
                 
