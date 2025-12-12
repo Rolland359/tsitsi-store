@@ -264,7 +264,7 @@
                         </form>
                     {% else %}
                         <p class="alert alert-warning text-center">
-                            <i class="fas fa-lock me-2"></i> Vous devez être connecté pour laisser un avis. <a href="{% url 'login' %}?next={{ request.path }}">Connectez-vous ici</a>.
+                            <i class="fas fa-lock me-2"></i> Vous devez être connecté pour laisser un avis. <a href="{% url 'users:login' %}?next={{ request.path }}">Connectez-vous ici</a>.
                         </p>
                     {% endif %}
                 </div>

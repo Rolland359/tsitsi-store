@@ -28,8 +28,9 @@ class RegistrationForm(UserCreationForm):
             'last_name', 
             'phone_number', 
             'email',
-            'username', # Laissez le username si vous l'utilisez toujours
-        )
+            'username',
+            'password', # Le premier champ de mot de passe
+            'password2')
         
     # Cette méthode permet d'appliquer les classes Bootstrap à tous les champs
     def __init__(self, *args, **kwargs):
@@ -40,7 +41,10 @@ class RegistrationForm(UserCreationForm):
         
         # Ajout des classes Bootstrap aux champs
         for field_name, field in self.fields.items():
-            if field_name != 'password2': # Exclure la vérification du mot de passe
+            if field_name not in ['password', 'password2']: # Exclure la vérification du mot de passe
+                 field.widget.attrs.update({'class': 'form-control'})
+            else:
+                 # Vous pouvez ajouter la classe 'form-control' aux champs de mot de passe aussi
                  field.widget.attrs.update({'class': 'form-control'})
     
     # Validation personnalisée pour s'assurer que l'email est unique (si non géré dans le modèle)
