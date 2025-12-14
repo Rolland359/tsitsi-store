@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Résultats de recherche pour "{{ keyword }}" - Tsitsi Store
+{% endblock %}
+
+{% block content %}
+
+<section class="section-content padding-y">
+    <div class="container">
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Recherche</li>
+            </ol>
+        </nav>
+        
+        <header class="section-heading">
+            <h3 class="section-title">
+                Résultats de recherche pour : **"{{ keyword }}"**
+            </h3>
+            <p class="text-muted">
+                <i class="fas fa-search"></i> 
+                Nous avons trouvé **{{ products_count }}** produit(s) correspondant à votre recherche.
+            </p>
+            <hr>
+        </header>
+
+        <div class="row">
+            
+            {% if products %}
+                
+                {% for product in products %}
+                <div class="col-md-3">
+                    <figure class="card card-product-grid">
+                        <div class="img-wrap">
+                            {% if product.images %}
+                                <img src="{{ product.images.url }}" alt="{{ product.product_name }}">
+                            {% else %}
+                                <img src="{% static 'images/default_product.png' %}" alt="Image non disponible">
+                            {% endif %}
+                            <a class="btn-overlay" href="{{ product.get_url }}"><i class="fa fa-search-plus"></i> Aperçu</a>
+                        </div> <figcaption class="info-wrap">
+                            <a href="{{ product.get_url }}" class="title">{{ product.product_name }}</a>
+                            <div class="price mt-1">
+                                {{ product.price }} MGA
+                            </div> </figcaption>
+                    </figure>
+                </div> {% endfor %}
+
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-warning text-center" role="alert">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <h4 class="alert-heading">Désolé !</h4>
+                        <p>Aucun produit ne correspond à votre terme de recherche : <strong>"{{ keyword }}"</strong>.</p>
+                        <hr>
+                        <p class="mb-0">Veuillez essayer une recherche avec des mots-clés différents ou plus généraux.</p>
+                        <a href="{% url 'store:catalogue' %}" class="btn btn-primary mt-3">Voir tout le catalogue</a>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div> </div> </section>
+{% endblock %}
