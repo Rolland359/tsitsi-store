@@ -139,7 +139,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static'), ]
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
 
 # 4. Configuration des Médias (Pour les Images Téléversées - TRÈS IMPORTANT pour les PRODUITS)
 # Les images des produits sont des fichiers Média, pas Statiques.
@@ -147,7 +147,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 
 # Le chemin physique où Django stocke les fichiers média (téléchargés par l'utilisateur/admin)
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
