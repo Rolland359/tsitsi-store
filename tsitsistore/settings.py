@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     # Custom apps
     'cart.apps.CartConfig',
@@ -171,3 +172,5 @@ LOGIN_REDIRECT_URL = 'users:my_account'
 
 # Rediriger l'utilisateur vers 'users:login' s'il essaie d'accéder à une page @login_required
 LOGIN_URL = 'users:login'
+
+SITE_ID = 1

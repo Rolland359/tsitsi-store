@@ -3,6 +3,7 @@ from django.contrib import messages
 from cart.models import Cart, CartItem
 from orders.models import Order, OrderItem
 from store.models import Product
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from .forms import OrderForm # NOUVEL IMPORT
@@ -17,6 +18,12 @@ def send_order_confirmation_email(order):
     """
     Construit et envoie l'email de confirmation de commande.
     """
+    # Récupérer le site courant (où self est la requête si disponible)
+    current_site = Site.objects.get_current() # Ou Site.objects.get(pk=settings.SITE_ID)
+    domain = current_site.domain
+    
+    # Déterminez le protocole (utilisez 'https' pour la production)
+    protocol = 'https'
     try:
         order_items = OrderItem.objects.filter(order=order)
         sub_total = order.order_total - order.tax
@@ -25,6 +32,8 @@ def send_order_confirmation_email(order):
             'order': order,
             'order_items': order_items,
             'sub_total': sub_total,
+            'domain': domain,
+            'protocol': protocol,
         }
         
         # Rendu des templates
