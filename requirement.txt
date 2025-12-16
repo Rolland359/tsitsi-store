@@ -1,0 +1,4 @@
+pip install django-chartjs
+pip install django-admin-tools
+pip install djangorestframework
+pip install django

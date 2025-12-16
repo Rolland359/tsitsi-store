@@ -23,7 +23,7 @@ def low_stock_report(request):
     Affiche la liste des produits dont le stock actuel est
     inférieur ou égal au seuil critique (reorder_point).
     """
-    products_to_order = Product.object.filter(stock__lte=models.F('reorder_point'), is_avaible=True).select_related('category').order_by('stock')
+    products_to_order = Product.object.filter(stock__lte=F('reorder_point'), is_avaible=True).select_related('category').order_by('stock')
 
     if not products_to_order.exists():
         messages.success(request, "Bonne nouvelle ! Aucun produit n'a atteint son seuil critique.")
@@ -187,47 +187,54 @@ def submit_review(request, product_id):
     """
     Vue pour gérer la soumission d'un avis (note, commentaire, images) pour un produit spécifique.
     """
-    url = request.META.get('HTTP_REFERER') # Pour rediriger l'utilisateur vers la page précédente
+    url = request.META.get('HTTP_REFERER') 
 
     if request.method == 'POST':
         product = get_object_or_404(Product, id=product_id)
         
-        # 1. Vérifier si l'utilisateur a déjà soumis un avis pour ce produit
+        # 1. Préparation du formulaire (modification ou nouveau)
         try:
-            # Tente de récupérer l'avis existant (pour modification)
             review_object = ReviewAndRating.objects.get(user=request.user, product=product)
-            form = ReviewForm(request.POST, instance=review_object) # Utilise l'instance existante
+            form = ReviewForm(request.POST, request.FILES, instance=review_object) 
         except ReviewAndRating.DoesNotExist:
-            # Si aucun avis n'existe, créer une nouvelle instance
-            form = ReviewForm(request.POST)
-
-        # 2. Validation et Sauvegarde du formulaire principal
+            form = ReviewForm(request.POST, request.FILES)
+        
+        # 2. Validation et Sauvegarde
         if form.is_valid():
-            data = ReviewAndRating()
-            if 'instance' in locals():
-                 data = review
-
-            # Gérer le champ de note : Il est toujours 0 si l'utilisateur ne l'a pas défini.
-            # Même si le rating était soumis (depuis le template), cette ligne l'ignorerait.
-            data.rating = 0 
             
-            # Si vous voulez permettre à l'utilisateur de cliquer sur les étoiles quand même, 
-            # et si le champ rating est présent dans request.POST :
-            if 'rating' in request.POST and request.POST['rating'].isdigit():
-                 data.rating = int(request.POST['rating'])
+            # --- POINT CRUCIAL DE LA CORRECTION ---
+            
+            # Si c'est une modification, form.save(commit=False) n'est pas nécessaire.
+            # Sinon, si c'est une création, form.save(commit=False) crée l'instance.
+            if 'instance' in locals():
+                 # S'il existe (modification)
+                 data = review_object 
             else:
-                 data.rating = 0 # Par défaut à 0
-
-            data.review = form.cleaned_data['review']
+                 # S'il n'existe pas (nouveau)
+                 data = form.save(commit=False)
+            
+            # ASSIGNATION DES DONNÉES NETTOYÉES
+            
+            # La note est récupérée directement depuis form.cleaned_data,
+            # où elle est stockée par Django grâce à name="rating" dans le HTML.
+            # Utilisez .get() pour plus de sécurité.
+            data.rating = form.cleaned_data.get('rating')
+            
+            # Le commentaire est aussi récupéré ou est déjà dans 'data' si form.save() est utilisé
+            data.review = form.cleaned_data.get('review', data.review)
+            
+            # Assurer les champs utilisateur et produit (pour les nouveaux avis)
             data.product_id = product_id
             data.user_id = request.user.id
             data.is_active = True
-            data.save()
             
-            # 3. Gestion des images jointes
-            for i in range(1, 4): # On s'attend à 3 champs d'image dans le formulaire
+            data.save() # Sauvegarde de l'objet mis à jour
+            
+            # 3. Gestion des images jointes (inchangé)
+            for i in range(1, 4): 
                 image_key = f'image_{i}'
-                if request.FILES.get(image_key):
+                # Assurez-vous d'utiliser request.FILES ici
+                if request.FILES.get(image_key): 
                     ReviewImage.objects.create(
                         review=data,
                         image=request.FILES.get(image_key)
@@ -236,9 +243,9 @@ def submit_review(request, product_id):
             messages.success(request, 'Merci ! Votre avis a été soumis avec succès.')
             return redirect(url)
         else:
-            # En cas d'erreur de validation (ex: note manquante)
+            # En cas d'erreur de validation (vérifiez console pour form.errors)
+            print(form.errors)
             messages.error(request, 'Erreur lors de la soumission de l\'avis. Veuillez corriger le formulaire.')
             return redirect(url)
             
-    # Si la méthode n'est pas POST, rediriger simplement
     return redirect(url)

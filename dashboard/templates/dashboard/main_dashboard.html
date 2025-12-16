@@ -1,75 +1,306 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %} {% block title %}{{ title }}{% endblock %}
+{% load humanize %} 
+
+{% block title %}Tableau de Bord | {{ title }}{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        /* Style pour améliorer l'aspect du menu sur la gauche */
+        .sidebar {
+            background-color: #343a40; /* Dark background */
+            min-height: 100vh;
+        }
+        .sidebar a {
+            color: #adb5bd;
+        }
+        .sidebar a.active {
+            color: #fff;
+            background-color: #0d6efd;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5">
-    <h1 class="display-5 fw-bold mb-5 text-center text-primary">
-        <i class="fas fa-tachometer-alt me-2"></i> Tableau de Bord Tsitsi Store
-    </h1>
-
-    <div class="row g-4 mb-5">
-        
-        <div class="col-md-4">
-            <div class="card bg-success text-white shadow-lg h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-light">Revenu Total (Brut)</h5>
-                    <p class="card-text h2 fw-bold">{{ total_revenue|intcomma }} Ar</p>
-                    <p class="card-text small opacity-75">Basé sur les commandes 'Completed' et 'Accepted'.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card bg-info text-white shadow-lg h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-light">Commandes Complétées</h5>
-                    <p class="card-text h2 fw-bold">{{ completed_orders }} / {{ total_orders }}</p>
-                    <p class="card-text small opacity-75">Total des commandes payées/traitées.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card bg-secondary text-white shadow-lg h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-light">Clients Enregistrés</h5>
-                    <p class="card-text h2 fw-bold">{{ total_users }}</p>
-                    <p class="card-text small opacity-75">Nombre total de comptes clients actifs.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="container-fluid">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow-lg">
-                <div class="card-header bg-danger text-white fw-bold h5">
-                    <i class="fas fa-warehouse me-2"></i> Alerte Stock Critique ({{ low_stock_count }} Produits)
-                </div>
-                <div class="card-body">
-                    {% if low_stock_products %}
-                    <p class="text-danger">Les {{ low_stock_products|length }} produits les plus critiques sont affichés ci-dessous. Ils ont atteint leur seuil de commande ({{ low_stock_products.0.reorder_point }} ou moins).</p>
-                    <ul class="list-group">
-                        {% for product in low_stock_products %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="{% url 'admin:store_product_change' product.pk %}" class="fw-bold text-dark">{{ product.product_name }}</a>
-                            <span class="badge bg-danger rounded-pill">{{ product.stock }} en stock</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div class="alert alert-success text-center mb-0">
-                        <i class="fas fa-check-circle me-2"></i> Tous les stocks semblent suffisants !
+        
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-dark py-4 shadow">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="fas fa-chart-line me-2"></i> Vue Générale
+                        </a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-shopping-bag me-2"></i> Produits</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-boxes me-2"></i> Stocks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-truck me-2"></i> Commandes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-users me-2"></i> Clients</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i> Administration</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <h1 class="display-6 fw-bold mb-4 text-dark">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i> Tableau de Bord Tsitsi Store
+            </h1>
+            
+            <div class="row g-4 mb-5">
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="card bg-success text-white shadow-lg h-100">
+                        <div class="card-body">
+                            <h5 class="card-title fw-light">Ventes Totales (MGA)</h5>
+                            <p class="card-text h2 fw-bold">{{ total_revenue|intcomma }} Ar</p>
+                            <span class="small opacity-75">+X% vs Mois dernier</span>
+                        </div>
                     </div>
-                    {% endif %}
                 </div>
-                <div class="card-footer text-end">
-                    <a href="{% url 'admin:store_product_changelist' %}" class="btn btn-outline-secondary btn-sm">Gérer les Stocks dans l'Admin</a>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="card bg-info text-white shadow-lg h-100">
+                        <div class="card-body">
+                            <h5 class="card-title fw-light">Commandes Complétées</h5>
+                            <p class="card-text h2 fw-bold">{{ completed_orders }} / {{ total_orders }}</p>
+                            <span class="small opacity-75">Taux de conversion Y%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="card bg-warning text-dark shadow-lg h-100">
+                        <div class="card-body">
+                            <h5 class="card-title fw-light">Panier Moyen</h5>
+                            {% comment %} Calcul du panier moyen: total_revenue / completed_orders {% endcomment %}
+                            <p class="card-text h2 fw-bold">{% widthratio total_revenue completed_orders 1|intcomma %} Ar</p> 
+                            <span class="small opacity-75">Augmentation de Z Ar</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="card bg-secondary text-white shadow-lg h-100">
+                        <div class="card-body">
+                            <h5 class="card-title fw-light">Nouveaux Clients</h5>
+                            <p class="card-text h2 fw-bold">{{ total_users }}</p>
+                            <span class="small opacity-75">Total : {{ total_users_all_time }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-lg-8">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header fw-bold h5">
+                            <i class="fas fa-chart-bar me-2"></i> Ventes et Commandes (6 Derniers Mois)
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChart" style="max-height: 400px;"></canvas> 
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header fw-bold h5">
+                            <i class="fas fa-star me-2"></i> Top 5 Produits Vendus
+                        </div>
+                        <div class="card-body">
+                            <canvas id="topProductsChart" style="max-height: 400px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-lg-6">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header bg-danger text-white fw-bold h5">
+                            <i class="fas fa-warehouse me-2"></i> Alerte Stock Critique ({{ low_stock_count }} Produits)
+                        </div>
+                        <div class="card-body">
+                             {% if low_stock_products %}
+                            <p class="text-danger">Les **{{ low_stock_products|length }}** produits les plus critiques sont affichés ci-dessous.</p>
+                            <ul class="list-group">
+                                {% for product in low_stock_products %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'admin:store_product_change' product.pk %}" class="fw-bold text-dark">{{ product.product_name }}</a>
+                                    <span class="badge bg-danger rounded-pill">{{ product.stock }} en stock</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <div class="alert alert-success text-center mb-0">
+                                <i class="fas fa-check-circle me-2"></i> Tous les stocks semblent suffisants !
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer text-end">
+                            <a href="{% url 'admin:store_product_changelist' %}" class="btn btn-outline-secondary btn-sm">Gérer les Stocks</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header fw-bold h5">
+                            <i class="fas fa-history me-2"></i> Activité Récente (Dernières 5 Commandes)
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>N° Cmd</th>
+                                        <th>Client</th>
+                                        <th>Statut</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% comment %} Supposons que 'recent_orders' est passé par le contexte {% endcomment %}
+                                    {% for order in recent_orders %}
+                                    <tr>
+                                        <td><a href="{% url 'admin:orders_order_change' order.pk %}" class="text-primary fw-bold">{{ order.order_number }}</a></td>
+                                        <td>{{ order.full_name|default:order.user.username }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if order.status == 'Completed' %}bg-success
+                                                {% elif order.status == 'Pending' or order.status == 'NEW' %}bg-warning text-dark
+                                                {% elif order.status == 'Cancelled' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ order.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ order.order_total|intcomma }} Ar</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">Aucune commande récente à afficher.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-    
-    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 1. Parsing des Données JSON de Django ---
+        
+        // Données Top Produits
+        // Note: JSON.parse est essentiel pour convertir la chaîne JSON en objet JavaScript.
+        const topLabels = JSON.parse('{{ top_products_labels_json|safe }}');
+        const topQuantities = JSON.parse('{{ top_products_data_json|safe }}');
+        
+        // Données Tendances Ventes/Commandes
+        const salesLabels = JSON.parse('{{ sales_labels_json|safe }}');
+        const salesDataArray = JSON.parse('{{ sales_data_json|safe }}'); // Renommé pour éviter le conflit
+        const ordersDataArray = JSON.parse('{{ orders_data_json|safe }}'); // Renommé pour éviter le conflit
+
+        
+        // --- 2. Construction des Objets de Données Chart.js (Dynamique) ---
+
+        const salesChartData = {
+            // Utilise les labels de la vue
+            labels: salesLabels, 
+            datasets: [
+                {
+                    label: 'Ventes (Ar)',
+                    // Utilise les données de ventes de la vue
+                    data: salesDataArray, 
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.3,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Commandes',
+                    // Utilise les données de commandes de la vue
+                    data: ordersDataArray, 
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }
+            ]
+        };
+
+        const topProductsChartData = {
+            // Utilise les labels de la vue
+            labels: topLabels, 
+            datasets: [{
+                label: 'Quantité Vendue',
+                // Utilise les quantités vendues de la vue
+                data: topQuantities, 
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)', // Rouge
+                    'rgba(54, 162, 235, 0.6)', // Bleu
+                    'rgba(255, 206, 86, 0.6)', // Jaune
+                    'rgba(75, 192, 192, 0.6)', // Vert
+                    'rgba(153, 102, 255, 0.6)', // Violet
+                ],
+                borderColor: 'rgba(255, 255, 255, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // --- 3. Configuration et Initialisation des Graphiques ---
+
+        // Configuration du Graphique de Ventes (Tendances)
+        new Chart(
+            document.getElementById('salesChart'),
+            {
+                type: 'line',
+                // Utilise les données dynamiques
+                data: salesChartData, 
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Ventes (Ar)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false }, 
+                            title: { display: true, text: 'Commandes' }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Configuration du Graphique des Top Produits
+        new Chart(
+            document.getElementById('topProductsChart'),
+            {
+                type: 'bar',
+                // Utilise les données dynamiques
+                data: topProductsChartData, 
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            }
+        );
+    });
+</script>
+
 {% endblock %}

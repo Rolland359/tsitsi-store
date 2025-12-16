@@ -1,0 +1,38 @@
+#base de donne
+*.sqlite3
+
+# Fichiers de code compilé
+*.pyc
+__pycache__/
+
+# Fichiers de distribution et de construction (si vous packagez votre app)
+.Python
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Fichiers de Médias (images uploadées, etc.)
+# Créez ce dossier MEDIA_ROOT si ce n'est pas déjà fait.
+/media/
+
+# Fichiers statiques collectés pour le déploiement (collectstatic)
+/static/
+
+#Environnement Virtuel
+venv/
+env/
+.venv/
+
+# ----------- IDE ET SYSTEME D'EXPLOITATION -----------
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# IDE (PyCharm)
+.idea/

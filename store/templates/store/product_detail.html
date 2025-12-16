@@ -235,11 +235,15 @@
                             {% csrf_token %}
                             
                             <p class="fw-bold mb-1">Notez le produit (1 à 7 étoiles) :</p>
-                            <div class="rating-stars mb-3 d-flex align-items-center">
+                            <div id="reviewFormStars" class="rating-stars mb-3 d-flex align-items-center">
                                 {% for i in "1234567"|make_list %}
-                                    <i class="fas fa-star text-muted star-icon me-1" data-rating="{{ forloop.counter }}" style="cursor: pointer; font-size: 1.5rem;"></i>
+                                    <i class="fas fa-star star-icon me-1" 
+                                    data-rating="{{ forloop.counter }}" 
+                                    style="cursor: pointer; font-size: 1.5rem; color: #adb5bd;">
+                                    </i>
                                 {% endfor %}
-                                <input type="hidden" name="{{ review_form.rating.name }}" id="{{ review_form.rating.id_for_label }}" value="">
+                                
+                                <input type="hidden" name="rating" id="id_review_rating_value" value="">
                             </div>
                             
                             <div class="form-group mb-3">
@@ -283,6 +287,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --------------------------------------------------------
+        // JS pour le Carrousel d'Images
+        // --------------------------------------------------------
         const mainImage = document.getElementById('mainImage');
         const thumbnails = document.querySelectorAll('.miniature-img');
         
@@ -301,53 +308,67 @@
         // --------------------------------------------------------
         // JS pour la notation par étoiles (Review/Rating)
         // --------------------------------------------------------
-        const ratingContainer = document.querySelector('.rating-stars');
-        // Changement ici : on vise l'ID que nous avons défini dans le template
-        const hiddenRatingField = document.getElementById('hiddenRatingInput'); 
-        const starIcons = ratingContainer ? ratingContainer.querySelectorAll('.star-icon') : [];
+        const ratingContainer = document.getElementById('reviewFormStars');
+        // CIBLE L'ID STATIQUE DANS LE FORMULAIRE
+        const hiddenRatingField = document.getElementById('id_review_rating_value'); 
         
-        // Fonction pour mettre à jour l'apparence des étoiles
-        function updateStarAppearance(ratingValue) {
-            starIcons.forEach(star => {
-                const sValue = parseInt(star.getAttribute('data-rating'));
-                if (sValue <= ratingValue) {
-                    star.style.color = '#ffc107'; // Jaune vif (sélectionné)
-                } else {
-                    star.style.color = '#adb5bd'; // Gris muted (non sélectionné)
-                }
-            });
-        }
-        
-        // Initialiser les étoiles si une note existe déjà (pour la modification)
-        const initialRating = parseInt(hiddenRatingField.value) || 0;
-        updateStarAppearance(initialRating);
-
-
-        starIcons.forEach(star => {
-            // Clic: Définit la note réelle
-            star.addEventListener('click', function() {
-                const ratingValue = parseInt(this.getAttribute('data-rating'));
-                hiddenRatingField.value = ratingValue;
-                updateStarAppearance(ratingValue);
-            });
+        // Exécuter la logique de notation uniquement si les éléments sont présents (utilisateur connecté)
+        if (ratingContainer && hiddenRatingField) {
+            console.log('Éléments de notation trouvés. Ajout des écouteurs.');
             
-            // Survol (Mouseover): Pré-visualise la sélection
-            star.addEventListener('mouseover', function() {
-                 const ratingValue = parseInt(this.getAttribute('data-rating'));
-                 starIcons.forEach(s => {
-                    const sValue = parseInt(s.getAttribute('data-rating'));
+            const starIcons = ratingContainer.querySelectorAll('.star-icon');
+            
+            // Fonction pour mettre à jour l'apparence des étoiles
+            function updateStarAppearance(ratingValue) {
+                starIcons.forEach(star => {
+                    const sValue = parseInt(star.getAttribute('data-rating'));
+                    // Utilisez une couleur neutre pour le non sélectionné
+                    const colorNonSelected = '#adb5bd'; 
+                    
                     if (sValue <= ratingValue) {
-                        s.style.color = 'orange'; // Couleur de survol
+                        star.style.color = '#ffc107'; // Jaune vif (sélectionné)
+                    } else {
+                        star.style.color = colorNonSelected; 
                     }
-                 });
-            });
+                });
+            }
             
-            // Sortie (Mouseout): Réinitialise à la note sélectionnée
-            star.addEventListener('mouseout', function() {
-                const currentRating = parseInt(hiddenRatingField.value) || 0;
-                updateStarAppearance(currentRating);
+            // Initialiser les étoiles si une note existe déjà (pour la modification)
+            const initialRating = parseInt(hiddenRatingField.value) || 0;
+            updateStarAppearance(initialRating);
+
+
+            starIcons.forEach(star => {
+                // Clic: Définit la note réelle
+                star.addEventListener('click', function() {
+                    const ratingValue = parseInt(this.getAttribute('data-rating'));
+                    hiddenRatingField.value = ratingValue;
+                    updateStarAppearance(ratingValue);
+                    console.log('Note sélectionnée : ' + ratingValue); 
+                });
+                
+                // Survol (Mouseover): Pré-visualise la sélection
+                star.addEventListener('mouseover', function() {
+                     const ratingValue = parseInt(this.getAttribute('data-rating'));
+                     starIcons.forEach(s => {
+                        const sValue = parseInt(s.getAttribute('data-rating'));
+                        if (sValue <= ratingValue) {
+                            s.style.color = 'orange'; // Couleur de survol
+                        }
+                     });
+                });
+                
+                // Sortie (Mouseout): Réinitialise à la note sélectionnée
+                star.addEventListener('mouseout', function() {
+                    const currentRating = parseInt(hiddenRatingField.value) || 0;
+                    updateStarAppearance(currentRating);
+                });
             });
-        });
+        } else {
+             // Ce log ne devrait s'afficher que si l'utilisateur est déconnecté 
+             // ou s'il y a un autre problème de chargement de l'élément.
+             console.log('Formulaire de notation non trouvé ou non affiché.');
+        }
         
     });
 </script>
