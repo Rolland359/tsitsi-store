@@ -138,9 +138,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static'), ]
+STATICFILES_DIRS = [ BASE_DIR / 'static', ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
+STATIC_ROOT = BASE_DIR / 'static_files'
 
 # 4. Configuration des Médias (Pour les Images Téléversées - TRÈS IMPORTANT pour les PRODUITS)
 # Les images des produits sont des fichiers Média, pas Statiques.

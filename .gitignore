@@ -1,5 +1,6 @@
 #base de donne
 *.sqlite3
+db.sqlite3
 
 # Fichiers de code compilé
 *.pyc
