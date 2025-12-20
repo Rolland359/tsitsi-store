@@ -5,6 +5,7 @@
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/custom_styles.css' %}">
+    <link rel="stylesheet" href="{% static 'store/css/styles.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -51,17 +52,19 @@
             </div>
         </section>
 
-        <section class="mb-5">
-            <h2 class="fw-bold mb-4 text-center">Nos Dernières Nouveautés</h2>
+        <section class="mb-5 py-4">
+            <h2 class="fw-bold mb-4 text-center display-6">Nos Dernières Nouveautés</h2>
 
             <div id="skeleton-grid" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
                 {% for i in "1234" %}
                 <div class="col">
-                    <div class="card h-100 border-0 shadow-sm p-3">
-                        <div class="skeleton skeleton-img mb-3" style="height: 200px; width: 100%;"></div>
-                        <div class="skeleton skeleton-title mb-2" style="height: 1.5rem; width: 90%;"></div>
-                        <div class="skeleton skeleton-text mb-4" style="height: 1rem; width: 50%;"></div>
-                        <div class="skeleton skeleton-text mt-auto" style="height: 38px; width: 100%;"></div>
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        <div class="skeleton" style="height: 250px; width: 100%;"></div>
+                        <div class="card-body font-weight-bold">
+                            <div class="skeleton mb-2" style="height: 1.5rem; width: 90%;"></div>
+                            <div class="skeleton mb-4" style="height: 1rem; width: 50%;"></div>
+                            <div class="skeleton mt-auto" style="height: 45px; width: 100%; border-radius: 8px;"></div>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -70,16 +73,18 @@
             <div id="product-grid" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" style="display: none !important;">
                 {% for product in products %}
                 <div class="col">
-                    <div class="card h-100 shadow-sm border-0 product-card">
-                        <div class="d-flex justify-content-center align-items-center p-3" style="height: 250px;">
+                    <div class="card h-100 shadow-sm border-0 product-card d-flex flex-column">
+                        
+                        <div class="img-container">
                             <a href="{% url 'store:product_detail' product.category.slug product.slug %}">
-                                <img src="{{ product.images.url }}" class="card-img-top img-fluid" alt="{{ product.product_name }}" style="max-height: 100%; width: auto; object-fit: contain;">
+                                <img src="{{ product.images.url }}" alt="{{ product.product_name }}">
                             </a>
                         </div>
-                        <div class="card-body d-flex flex-column">
+
+                        <div class="card-body d-flex flex-column p-3">
                             
                             <h5 class="card-title fw-bold product-title-limit mb-1">
-                                <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="text-decoration-none text-dark">
+                                <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="text-decoration-none text-dark stretched-link">
                                     {{ product.product_name }}
                                 </a>
                             </h5>
@@ -87,23 +92,33 @@
                             <p class="text-muted small mb-3">{{ product.category.name }}</p>
                             
                             <div class="mt-auto">
-                                <p class="h5 text-danger fw-bold mb-3">{{ product.price }} Ar</p>
-                                <a href="{% url 'cart:add_cart' product.id %}" class="btn btn-sm btn-outline-primary w-100 py-2">
-                                    <i class="fa-solid fa-cart-plus me-1"></i> Ajouter au Panier
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <p class="h5 text-danger fw-bold mb-0">{{ product.price }} Ar</p>
+                                    {% if product.stock == 0 %}
+                                        <span class="badge bg-danger">Rupture</span>
+                                    {% endif %}
+                                </div>
+                            
+                                <a href="{% url 'cart:add_cart' product.id %}" class="btn btn-primary w-100 py-2 shadow-sm fw-bold" style="border-radius: 8px;">
+                                    <i class="fa-solid fa-cart-plus me-2"></i> Ajouter au Panier
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                <div class="col-12 text-center py-5">
-                    <p class="text-muted">Aucun produit disponible pour le moment.</p>
+                <div class="col-12 text-center py-5 my-5">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Aucun nouveau produit disponible pour le moment.
+                    </div>
                 </div>
                 {% endfor %}
             </div>
             
             <div class="text-center mt-5">
-                <a href="{% url 'store:catalogue' %}" class="btn btn-outline-secondary btn-lg px-4">Voir Tout le Catalogue</a>
+                <a href="{% url 'store:catalogue' %}" class="btn btn-outline-dark btn-lg px-5" style="border-radius: 50px;">
+                    Voir Tout le Catalogue
+                </a>
             </div>
         </section>
         
