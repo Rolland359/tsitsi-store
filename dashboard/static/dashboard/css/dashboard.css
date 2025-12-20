@@ -1,0 +1,51 @@
+/* Sidebar Styles */
+.sidebar {
+    background-color: #212529;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link {
+    color: #adb5bd;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    margin: 0.2rem 1rem;
+    transition: 0.2s;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+    color: #fff;
+    background-color: #0d6efd;
+}
+
+/* KPI Carousel System */
+@media (max-width: 767.98px) {
+    .kpi-carousel-wrapper {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 15px;
+        padding: 10px 5px 20px 5px;
+        scrollbar-width: none; /* Firefox */
+    }
+
+    .kpi-carousel-wrapper::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+
+    .kpi-item {
+        min-width: 85%; /* Permet de voir un bout de la carte suivante */
+        scroll-snap-align: center;
+    }
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
