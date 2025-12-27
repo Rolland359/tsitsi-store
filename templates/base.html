@@ -75,27 +75,36 @@
     </div>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
-        <div class="container-fluid" style="height: 8vh;">
+        <div class="container-fluid flex-wrap flex-lg-nowrap" style="min-height: 8vh;">
             
-            <button class="btn btn-dark d-lg-none me-2" id="openDrawerBtn">
-                <i class="fa-solid fa-bars fa-lg"></i>
-            </button>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-dark d-lg-none me-2" id="openDrawerBtn">
+                    <i class="fa-solid fa-bars fa-lg"></i>
+                </button>
 
-            <h1 class="me-5 mb-0 h4">
-                <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-                    <img src="{% static 'img/Logo.png' %}" alt="Logo" class="rounded-circle me-1" style="width: 40px; height: 40px; object-fit: cover;">  
-                    Tsitsi Store
-                </a>
-            </h1>
-            
-            <div class="collapse navbar-collapse ms-3 bg-dark" id="navbarNav">
+                <h1 class="me-2 me-lg-5 mb-0 h4">
+                    <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                        <img src="{% static 'img/Logo.png' %}" alt="Logo" class="rounded-circle me-1" style="width: 40px; height: 40px; object-fit: cover;">  
+                        <span class="d-none d-sm-inline">Tsitsi Store</span>
+                    </a>
+                </h1>
+            </div>
+
+            <div class="order-3 order-lg-2 w-100 mt-2 mt-lg-0 d-lg-none">
+                <form action="{% url 'store:search' %}" method="GET" class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="Rechercher..." name="keyword" required>
+                    <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+
+            <div class="collapse navbar-collapse order-lg-2 ms-lg-3 bg-dark" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"><i class="fa-solid fa-house me-1"></i> Accueil</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'store:catalogue' %}"><i class="fa-solid fa-shop me-1"></i> Boutique</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'store:category_list' %}"><i class="fa-solid fa-table-cells-large me-1"></i> Catégories</a></li>
                 </ul>
                 
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav ms-auto align-items-center d-none d-lg-flex">
                     <form action="{% url 'store:search' %}" method="GET" class="d-flex me-3">
                         <input class="form-control me-2" type="search" placeholder="Rechercher..." name="keyword" required>
                         <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
@@ -111,7 +120,7 @@
                     </li>
                     
                     {% if user.is_authenticated %}
-                    <li class="nav-item dropdown d-none d-lg-block">
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" data-bs-toggle="dropdown">
                             {% if user.profile.profile_picture %}
                                 <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;">
@@ -132,11 +141,20 @@
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item d-none d-lg-block">
+                    <li class="nav-item">
                         <a class="nav-link btn btn-primary text-white px-3" href="{% url 'users:login' %}">Connexion / Inscription</a>
                     </li>
                     {% endif %}
                 </ul>
+            </div>
+
+            <div class="d-lg-none ms-auto">
+                <a class="nav-link position-relative text-white" href="{% url 'cart:cart_detail' %}">
+                    <i class="fa-solid fa-cart-shopping fa-lg"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                        {{ cart_count|default:0 }}
+                    </span>
+                </a>
             </div>
         </div>
     </nav>

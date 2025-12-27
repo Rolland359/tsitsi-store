@@ -101,3 +101,16 @@
     animation: shimmer 1.2s infinite linear;
     border-radius: 10px;
 }
+
+/* Style pour les indicateurs du carrousel mobile */
+#reasonsCarousel .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%; /* Transforme les barres en points */
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#reasonsCarousel .carousel-item {
+    transition: transform 0.6s ease-in-out; /* Animation plus douce */
+}

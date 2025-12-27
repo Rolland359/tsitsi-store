@@ -56,7 +56,41 @@
 .drawer-link:hover i { color: #0d6efd; }
 
 /* --- BARRE DE NAVIGATION MOBILE (Style Facebook) --- */
+/* Container de l'icône pour le panier */
+.mobile-nav-item.position-relative {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style du badge rouge */
+.mobile-nav-bar .badge {
+    position: absolute;
+    top: 2px;
+    right: 15%; /* Ajustez selon le centrage */
+    transform: translate(50%, -50%);
+    font-size: 0.65rem;
+    padding: 3px 6px;
+    border: 2px solid #fff; /* Ajoute un contour blanc pour le détacher du fond */
+}
+
+.mobile-nav-item {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Centre verticalement icône + texte */
+    transition: background 0.2s;
+}
+
+/* Feedback visuel au toucher */
+.mobile-nav-item:active {
+    background-color: rgba(0,0,0,0.05);
+}
 .mobile-nav-bar {
+    height: 65px; /* Hauteur standard confortable */
+    padding: 0 !important; /* On retire le padding pour que le lien prenne toute la place */
     display: none; /* Caché sur desktop */
     position: fixed;
     bottom: 0;
@@ -82,8 +116,13 @@
 }
 
 .mobile-nav-item i {
-    font-size: 1.3rem;
-    margin-bottom: 2px;
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    width: 24px; /* Force une largeur égale pour toutes les icônes */
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mobile-nav-item:active, .mobile-nav-item.active {

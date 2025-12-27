@@ -27,7 +27,8 @@
         
         <section class="mb-5 text-center">
             <h2 class="fw-bold mb-5">Pourquoi Choisir Tsitsi Store ?</h2>
-            <div class="row g-4">
+            
+            <div class="row g-4 d-none d-md-flex">
                 <div class="col-md-4">
                     <div class="p-3">
                         <i class="fas fa-hand-holding-usd fa-3x text-success mb-3"></i>
@@ -47,6 +48,38 @@
                         <i class="fas fa-handshake fa-3x text-warning mb-3"></i>
                         <h5 class="fw-bold">Qualité Garantie</h5>
                         <p class="text-muted">Chaque article est inspecté soigneusement avant son expédition.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reasonsCarousel" class="carousel slide d-block d-md-none" data-bs-ride="carousel">
+                <div class="carousel-indicators" style="bottom: -50px;">
+                    <button type="button" data-bs-target="#reasonsCarousel" data-bs-slide-to="0" class="active bg-dark" aria-current="true" aria-label="Slide 1"></button>
+                    <button type="button" data-bs-target="#reasonsCarousel" data-bs-slide-to="1" class="bg-dark" aria-label="Slide 2"></button>
+                    <button type="button" data-bs-target="#reasonsCarousel" data-bs-slide-to="2" class="bg-dark" aria-label="Slide 3"></button>
+                </div>
+
+                <div class="carousel-inner pb-5">
+                    <div class="carousel-item active" data-bs-interval="3000">
+                        <div class="p-4 shadow-sm mx-2 bg-light" style="border-radius: 15px;">
+                            <i class="fas fa-hand-holding-usd fa-3x text-success mb-3"></i>
+                            <h5 class="fw-bold">Prix Locaux Justes</h5>
+                            <p class="text-muted mb-0">Des prix accessibles, soutenant directement les artisans locaux.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" data-bs-interval="3000">
+                        <div class="p-4 shadow-sm mx-2 bg-light" style="border-radius: 15px;">
+                            <i class="fas fa-truck-fast fa-3x text-info mb-3"></i>
+                            <h5 class="fw-bold">Livraison Rapide</h5>
+                            <p class="text-muted mb-0">Partenariats avec des services locaux pour une réception en un temps record.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" data-bs-interval="3000">
+                        <div class="p-4 shadow-sm mx-2 bg-light" style="border-radius: 15px;">
+                            <i class="fas fa-handshake fa-3x text-warning mb-3"></i>
+                            <h5 class="fw-bold">Qualité Garantie</h5>
+                            <p class="text-muted mb-0">Chaque article est inspecté soigneusement avant son expédition.</p>
+                        </div>
                     </div>
                 </div>
             </div>
