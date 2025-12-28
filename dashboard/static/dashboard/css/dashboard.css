@@ -49,3 +49,16 @@
 .card:hover {
     transform: translateY(-5px);
 }
+
+ /* Style pour améliorer l'aspect du menu sur la gauche */
+        .sidebar {
+            background-color: #343a40; /* Dark background */
+            min-height: 100vh;
+        }
+        .sidebar a {
+            color: #adb5bd;
+        }
+        .sidebar a.active {
+            color: #fff;
+            background-color: #0d6efd;
+        }

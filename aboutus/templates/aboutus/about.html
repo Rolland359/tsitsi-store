@@ -3,24 +3,11 @@
 
 {% block title %}About Us - Tsitsi Store{% endblock %}
 
-{% block content %}
-    <style>
-        /* Styles personnalisés pour cette page */
-        .hero-section {
-            padding: 100px 0;
-            background-color: #f8f9fa; /* bg-light */
-        }
-        .mission-vision-card {
-            min-height: 200px;
-        }
-        .team-member {
-            transition: transform 0.3s ease;
-        }
-        .team-member:hover {
-            transform: translateY(-5px);
-        }
-    </style>
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'aboutus/css/styles.css' %}">
+{% endblock %}
 
+{% block content %}
     <header class="hero-section text-center">
         <div class="container">
             <p class="text-primary fw-bold mb-2">NOTRE HISTOIRE COMMENCE ICI</p>
@@ -33,29 +20,28 @@
     </header>
 
     <section id="mission" class="py-5">
-        <div class="container">
-            <div class="row text-center g-4">
-                
+        <div class="container text-center">
+            <div class="row g-4 d-none d-md-flex">
                 <div class="col-md-4">
-                    <div class="card p-4 mission-vision-card shadow-sm border-primary">
+                    <div class="card h-100 p-4 mission-vision-card shadow-sm border-primary">
                         <i class="fas fa-bullseye fa-3x text-primary mb-3"></i>
-                        <h3 class="h5 card-title">Notre Mission</h3>
+                        <h3 class="h5 card-title fw-bold">Notre Mission</h3>
                         <p class="card-text">Nous fournissons des solutions numériques **accessibles et intuitives** pour les PME, éliminant les barrières technologiques.</p>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card p-4 mission-vision-card shadow-sm border-success">
+                    <div class="card h-100 p-4 mission-vision-card shadow-sm border-success">
                         <i class="fas fa-rocket fa-3x text-success mb-3"></i>
-                        <h3 class="h5 card-title">Notre Vision</h3>
+                        <h3 class="h5 card-title fw-bold">Notre Vision</h3>
                         <p class="card-text">Devenir la référence mondiale pour l'autonomisation digitale des entrepreneurs d'ici 2030.</p>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card p-4 mission-vision-card shadow-sm border-info">
+                    <div class="card h-100 p-4 mission-vision-card shadow-sm border-info">
                         <i class="fas fa-handshake fa-3x text-info mb-3"></i>
-                        <h3 class="h5 card-title">Nos Valeurs</h3>
+                        <h3 class="h5 card-title fw-bold">Nos Valeurs</h3>
                         <ul class="list-unstyled text-start mx-auto" style="max-width: fit-content;">
                             <li><i class="fas fa-check-circle text-primary me-2"></i> Transparence totale</li>
                             <li><i class="fas fa-check-circle text-primary me-2"></i> Innovation constante</li>
@@ -63,7 +49,42 @@
                         </ul>
                     </div>
                 </div>
+            </div>
 
+            <div id="missionCarousel" class="carousel slide d-block d-md-none" data-bs-ride="carousel">
+                <div class="carousel-indicators" style="bottom: -50px;">
+                    <button type="button" data-bs-target="#missionCarousel" data-bs-slide-to="0" class="active bg-dark" aria-current="true" aria-label="Slide 1"></button>
+                    <button type="button" data-bs-target="#missionCarousel" data-bs-slide-to="1" class="bg-dark" aria-label="Slide 2"></button>
+                    <button type="button" data-bs-target="#missionCarousel" data-bs-slide-to="2" class="bg-dark" aria-label="Slide 3"></button>
+                </div>
+
+                <div class="carousel-inner pb-5">
+                    <div class="carousel-item active" data-bs-interval="4000">
+                        <div class="card p-4 mx-2 shadow-sm border-primary" style="border-radius: 15px; min-height: 250px;">
+                            <i class="fas fa-bullseye fa-3x text-primary mb-3"></i>
+                            <h3 class="h5 card-title fw-bold">Notre Mission</h3>
+                            <p class="card-text text-muted">Nous fournissons des solutions numériques **accessibles et intuitives** pour les PME.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" data-bs-interval="4000">
+                        <div class="card p-4 mx-2 shadow-sm border-success" style="border-radius: 15px; min-height: 250px;">
+                            <i class="fas fa-rocket fa-3x text-success mb-3"></i>
+                            <h3 class="h5 card-title fw-bold">Notre Vision</h3>
+                            <p class="card-text text-muted">Devenir la référence mondiale pour l'autonomisation digitale des entrepreneurs d'ici 2030.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" data-bs-interval="4000">
+                        <div class="card p-4 mx-2 shadow-sm border-info" style="border-radius: 15px; min-height: 250px;">
+                            <i class="fas fa-handshake fa-3x text-info mb-3"></i>
+                            <h3 class="h5 card-title fw-bold">Nos Valeurs</h3>
+                            <ul class="list-unstyled text-start mx-auto mb-0" style="max-width: fit-content;">
+                                <li><i class="fas fa-check-circle text-primary me-2"></i> Transparence</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i> Innovation</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i> Client d'abord</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

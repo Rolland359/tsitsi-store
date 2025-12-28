@@ -6,20 +6,7 @@
 
 {% block extra_head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <style>
-        /* Style pour améliorer l'aspect du menu sur la gauche */
-        .sidebar {
-            background-color: #343a40; /* Dark background */
-            min-height: 100vh;
-        }
-        .sidebar a {
-            color: #adb5bd;
-        }
-        .sidebar a.active {
-            color: #fff;
-            background-color: #0d6efd;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -48,46 +35,99 @@
                 <i class="fas fa-tachometer-alt me-2 text-primary"></i> Tableau de Bord Tsitsi Store
             </h1>
             
-            <div class="row g-4 mb-5">
-                
-                <div class="col-md-6 col-lg-3">
-                    <div class="card bg-success text-white shadow-lg h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fw-light">Ventes Totales (MGA)</h5>
-                            <p class="card-text h2 fw-bold">{{ total_revenue|intcomma }} Ar</p>
-                            <span class="small opacity-75">+X% vs Mois dernier</span>
+            <div class="mb-5">
+                <div class="row g-4 d-none d-lg-flex">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card bg-success text-white shadow-lg h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-light small">Ventes Totales (MGA)</h5>
+                                <p class="card-text h4 fw-bold">{{ total_revenue|intcomma }} Ar</p>
+                                <span class="small opacity-75">+X% vs Mois dernier</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card bg-info text-white shadow-lg h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-light small">Commandes Complétées</h5>
+                                <p class="card-text h4 fw-bold">{{ completed_orders }} / {{ total_orders }}</p>
+                                <span class="small opacity-75">Taux de conversion Y%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card bg-warning text-dark shadow-lg h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-light small">Panier Moyen</h5>
+                                <p class="card-text h4 fw-bold">{% widthratio total_revenue completed_orders 1|intcomma %} Ar</p> 
+                                <span class="small opacity-75">Augmentation de Z Ar</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card bg-secondary text-white shadow-lg h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-light small">Nouveaux Clients</h5>
+                                <p class="card-text h4 fw-bold">{{ total_users }}</p>
+                                <span class="small opacity-75">Total : {{ total_users_all_time }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-6 col-lg-3">
-                    <div class="card bg-info text-white shadow-lg h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fw-light">Commandes Complétées</h5>
-                            <p class="card-text h2 fw-bold">{{ completed_orders }} / {{ total_orders }}</p>
-                            <span class="small opacity-75">Taux de conversion Y%</span>
+
+                <div id="statsCarousel" class="carousel slide d-block d-lg-none" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        
+                        <div class="carousel-item active" data-bs-interval="5000">
+                            <div class="row g-2 px-2">
+                                <div class="col-6">
+                                    <div class="card bg-success text-white shadow-sm h-100 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-light small">Ventes</h6>
+                                            <p class="card-text h6 fw-bold mb-1">{{ total_revenue|intcomma }} Ar</p>
+                                            <small class="opacity-75" style="font-size: 0.6rem;">+X%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-info text-white shadow-sm h-100 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-light small">Commandes</h6>
+                                            <p class="card-text h6 fw-bold mb-1">{{ completed_orders }}</p>
+                                            <small class="opacity-75" style="font-size: 0.6rem;">Y% conv.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="carousel-item" data-bs-interval="5000">
+                            <div class="row g-2 px-2">
+                                <div class="col-6">
+                                    <div class="card bg-warning text-dark shadow-sm h-100 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-light small">Panier Moyen</h6>
+                                            <p class="card-text h6 fw-bold mb-1">{% widthratio total_revenue completed_orders 1|intcomma %} Ar</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-secondary text-white shadow-sm h-100 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-light small">Clients</h6>
+                                            <p class="card-text h6 fw-bold mb-1">{{ total_users }}</p>
+                                            <small class="opacity-75" style="font-size: 0.6rem;">Nouveaux</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
-                
-                <div class="col-md-6 col-lg-3">
-                    <div class="card bg-warning text-dark shadow-lg h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fw-light">Panier Moyen</h5>
-                            {% comment %} Calcul du panier moyen: total_revenue / completed_orders {% endcomment %}
-                            <p class="card-text h2 fw-bold">{% widthratio total_revenue completed_orders 1|intcomma %} Ar</p> 
-                            <span class="small opacity-75">Augmentation de Z Ar</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6 col-lg-3">
-                    <div class="card bg-secondary text-white shadow-lg h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fw-light">Nouveaux Clients</h5>
-                            <p class="card-text h2 fw-bold">{{ total_users }}</p>
-                            <span class="small opacity-75">Total : {{ total_users_all_time }}</span>
-                        </div>
+                    
+                    <div class="carousel-indicators" style="bottom: -35px;">
+                        <button type="button" data-bs-target="#statsCarousel" data-bs-slide-to="0" class="active bg-dark" aria-current="true"></button>
+                        <button type="button" data-bs-target="#statsCarousel" data-bs-slide-to="1" class="bg-dark"></button>
                     </div>
                 </div>
             </div>
