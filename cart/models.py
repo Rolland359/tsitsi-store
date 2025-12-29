@@ -59,6 +59,13 @@ class CartItem(models.Model):
         on_delete=models.CASCADE, 
         verbose_name="Produit"
     )
+
+    size = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True, 
+        verbose_name="Taille"
+    )
     
     quantity = models.IntegerField(
         default=1, 
@@ -81,11 +88,12 @@ class CartItem(models.Model):
         verbose_name = 'Article du Panier'
         verbose_name_plural = 'Articles du Panier'
         # Contrainte pour éviter d'avoir le même produit plusieurs fois dans le même panier (on augmente la quantité à la place)
-        unique_together = ('cart', 'product')
+        #unique_together = ('cart', 'product')
 
     def sub_total(self):
         """ Calcule le sous-total : Prix du produit * Quantité """
         return float(self.product.price) * float(self.quantity)
 
     def __str__(self):
-        return f'{self.quantity} x {self.product.product_name} dans le Panier {self.cart.id}'
+        size_info = f" ({self.size})" if self.size else ""
+        return f'{self.quantity} x {self.product.product_name}{size_info} dans le Panier {self.cart.id}'

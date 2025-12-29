@@ -1,5 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib import messages  # Import manquant
+from django.contrib.auth.decorators import user_passes_test  # Import manquant
+from django.http import HttpRequest, HttpResponseRedirect  # Imports pour le typage
 from store.models import Product 
 from .models import Cart, CartItem
 
@@ -26,18 +29,21 @@ def add_cart(request, product_id):
         size = "Unique" # Ou None, selon votre modèle
 
     # On cherche un article avec le MÊME produit ET la MÊME taille
-    try:
-        # Note : Assurez-vous d'avoir un champ 'size' dans votre modèle CartItem
-        cart_item = CartItem.objects.get(product=product, cart=cart, size=size)
+    # Recherche d'un article existant avec EXACTEMENT ce produit et cette taille
+    cart_item, created = CartItem.objects.get_or_create(
+        product=product, 
+        cart=cart, 
+        size=size,
+        defaults={'quantity': quantity_to_add}
+    )
+
+    if not created:
+        # Si la ligne existait déjà, on incrémente la quantité demandée
         cart_item.quantity += quantity_to_add
-        cart_item.save()
-    except CartItem.DoesNotExist:
-        cart_item = CartItem.objects.create(
-            product=product,
-            quantity=quantity_to_add,
-            cart=cart,
-            size=size
-        )
+        
+    # Mise à jour du line_total pour la BDD
+    cart_item.line_total = float(product.price) * cart_item.quantity
+    cart_item.save()
     
     return redirect('cart:cart_detail')
 
@@ -52,26 +58,68 @@ def cart_detail(request, total=0, counter=0, cart_items=None):
     except ObjectDoesNotExist:
         pass
     
-    return render(request, 'cart/cart_detail.html', 
-                  dict(cart_items=cart_items, total=total, counter=counter))
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'counter': counter,
+    }
+
+    return render(request, 'cart/cart_detail.html', context)
 
 # Implémentations pour retirer les produits
-def remove_cart(request, product_id):
-    """Décrémente la quantité d'un produit. Supprime l'article si la quantité est 0."""
-    cart = Cart.objects.get(cart_id=_cart_id(request))
+def remove_cart(request, product_id, cart_item_id):
+    cart = get_object_or_404(Cart, cart_id=_cart_id(request))
     product = get_object_or_404(Product, id=product_id)
-    cart_item = CartItem.objects.get(product=product, cart=cart)
-    if cart_item.quantity > 1:
-        cart_item.quantity -= 1
-        cart_item.save()
-    else:
-        cart_item.delete()
+    
+    try:
+        # On cible la ligne précise par son ID unique
+        cart_item = CartItem.objects.get(product=product, cart=cart, id=cart_item_id)
+        if cart_item.quantity > 1:
+            cart_item.quantity -= 1
+            cart_item.line_total = float(product.price) * cart_item.quantity
+            cart_item.save()
+        else:
+            cart_item.delete()
+    except CartItem.DoesNotExist:
+        pass
+        
     return redirect('cart:cart_detail')
+
 
 def full_remove(request, product_id):
     """Supprime complètement le CartItem du panier."""
     cart = Cart.objects.get(cart_id=_cart_id(request))
     product = get_object_or_404(Product, id=product_id)
-    cart_item = CartItem.objects.get(product=product, cart=cart)
-    cart_item.delete()
+    try:
+        cart_item = CartItem.objects.get(product=product, cart=cart, id=cart_item_id)
+        cart_item.delete()
+    except CartItem.DoesNotExist:
+        pass
+    return redirect('cart:cart_detail')
+
+@user_passes_test(lambda u: True) # Ou votre décorateur habituel
+def add_cart_from_cart_page(request: HttpRequest, product_id: int, cart_item_id: int) -> HttpResponseRedirect:
+    """
+    Incrémente la quantité d'un article spécifique directement depuis la page du panier.
+    Utilise l'ID de la ligne (cart_item_id) pour gérer correctement les tailles.
+    """
+    cart = get_object_or_404(Cart, cart_id=_cart_id(request))
+    product = get_object_or_404(Product, id=product_id)
+    
+    try:
+        # On cible précisément la ligne (le CartItem)
+        cart_item = CartItem.objects.get(product=product, cart=cart, id=cart_item_id)
+        
+        # Vérification optionnelle du stock réel
+        if cart_item.quantity < product.stock:
+            cart_item.quantity += 1
+            cart_item.line_total = float(product.price) * cart_item.quantity
+            cart_item.save()
+            messages.success(request, f"Quantité mise à jour pour {product.product_name}.")
+        else:
+            messages.warning(request, f"Désolé, seul {product.stock} articles sont disponibles en stock.")
+            
+    except CartItem.DoesNotExist:
+        messages.error(request, "Cet article n'est plus dans votre panier.")
+        
     return redirect('cart:cart_detail')
