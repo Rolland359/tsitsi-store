@@ -91,8 +91,8 @@
             </div>
 
             <div class="order-3 order-lg-2 w-100 mt-2 mt-lg-0 d-lg-none">
-                <form action="{% url 'store:search' %}" method="GET" class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Rechercher..." name="keyword" required>
+                <form action="{% url 'store:search' %}" method="GET" class="d-flex" id="search-form-mobile">
+                    <input class="form-control me-2" type="search" placeholder="Rechercher..." name="keyword" id="search-input-mobile" required>
                     <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
                 </form>
             </div>

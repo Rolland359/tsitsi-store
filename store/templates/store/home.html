@@ -154,22 +154,23 @@
                 </a>
             </div>
         </section>
-        
+
+        {% block extra_js %}
+            <script>
+                // Script pour basculer du Skeleton au contenu réel une fois la page chargée
+                window.addEventListener('load', function() {
+                    const skeletonGrid = document.getElementById('skeleton-grid');
+                    const productGrid = document.getElementById('product-grid');
+                    
+                    if (skeletonGrid && productGrid) {
+                        skeletonGrid.style.setProperty('display', 'none', 'important');
+                        productGrid.style.setProperty('display', 'flex', 'important');
+                    }
+                });
+            </script>
+            <script src="{% static 'store/js/search.js' %}"></script>
+        {% endblock %}        
     </div>
 </main>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    // Script pour basculer du Skeleton au contenu réel une fois la page chargée
-    window.addEventListener('load', function() {
-        const skeletonGrid = document.getElementById('skeleton-grid');
-        const productGrid = document.getElementById('product-grid');
-        
-        if (skeletonGrid && productGrid) {
-            skeletonGrid.style.setProperty('display', 'none', 'important');
-            productGrid.style.setProperty('display', 'flex', 'important');
-        }
-    });
-</script>
-{% endblock %}

@@ -5,6 +5,10 @@
     Résultats de recherche pour "{{ keyword }}" - Tsitsi Store
 {% endblock %}
 
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'store/css/search.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <section class="section-content padding-y">
@@ -28,40 +32,41 @@
             <hr>
         </header>
 
-        <div class="row">
-            
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
             {% if products %}
-                
                 {% for product in products %}
-                <div class="col-md-3">
-                    <figure class="card card-product-grid">
-                        <div class="img-wrap">
-                            {% if product.images %}
-                                <img src="{{ product.images.url }}" alt="{{ product.product_name }}">
-                            {% else %}
-                                <img src="{% static 'images/default_product.png' %}" alt="Image non disponible">
-                            {% endif %}
-                            <a class="btn-overlay" href="{{ product.get_url }}"><i class="fa fa-search-plus"></i> Aperçu</a>
-                        </div> <figcaption class="info-wrap">
-                            <a href="{{ product.get_url }}" class="title">{{ product.product_name }}</a>
-                            <div class="price mt-1">
-                                {{ product.price }} MGA
-                            </div> </figcaption>
-                    </figure>
-                </div> {% endfor %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+                        <div class="img-container">
+                            <a href="{{ product.get_url }}">
+                                {% if product.images %}
+                                    <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.product_name }}">
+                                {% else %}
+                                    <img src="{% static 'images/default_product.png' %}" class="card-img-top" alt="Image non disponible">
+                                {% endif %}
+                            </a>
+                            <a class="btn-overlay" href="{{ product.get_url }}">
+                                <i class="fa fa-search-plus"></i> Aperçu
+                            </a>
+                        </div>
 
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-warning text-center" role="alert">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                        <h4 class="alert-heading">Désolé !</h4>
-                        <p>Aucun produit ne correspond à votre terme de recherche : <strong>"{{ keyword }}"</strong>.</p>
-                        <hr>
-                        <p class="mb-0">Veuillez essayer une recherche avec des mots-clés différents ou plus généraux.</p>
-                        <a href="{% url 'store:catalogue' %}" class="btn btn-primary mt-3">Voir tout le catalogue</a>
+                        <div class="card-body d-flex flex-column p-3">
+                            <h5 class="card-title fw-bold product-title-limit mb-1">
+                                <a href="{{ product.get_url }}" class="text-decoration-none text-dark">
+                                    {{ product.product_name }}
+                                </a>
+                            </h5>
+                            
+                            <div class="mt-auto">
+                                <div class="price text-danger fw-bold h6 mb-0">
+                                    {{ product.price }} MGA
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            {% endif %}
-
-        </div> </div> </section>
+                {% endfor %}
+            {% else %}
+                {% endif %}
+        </div></div> </section>
 {% endblock %}

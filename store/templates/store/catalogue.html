@@ -7,6 +7,7 @@
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'store/css/styles.css' %}">
 {% endblock %}
+
 {% block content %}
 <div class="container py-5">
     
@@ -35,13 +36,13 @@
             </p>
         </div>
         
-        <div class="col-md-5 offset-md-4">
+       <div class="col-md-5 offset-md-4">
             <label for="sort-select" class="form-label visually-hidden">Trier par</label>
-            <select id="sort-select" class="form-select form-select-sm" onchange="window.location.href = this.value;">
-                <option value="{% url 'store:catalogue' %}" {% if not request.GET.sort %}selected{% endif %}>Trier par : Pertinence</option>
-                <option value="?sort=price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Prix croissant</option>
-                <option value="?sort=price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Prix décroissant</option>
-                <option value="?sort=latest" {% if request.GET.sort == 'latest' %}selected{% endif %}>Nouveautés</option>
+            <select id="sort-select" class="form-select form-select-sm" onchange="applySort(this.value);">
+                <option value="" {% if not request.GET.sort %}selected{% endif %}>Trier par : Pertinence</option>
+                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Prix croissant</option>
+                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Prix décroissant</option>
+                <option value="latest" {% if request.GET.sort == 'latest' %}selected{% endif %}>Nouveautés</option>
             </select>
         </div>
     </div>
@@ -77,7 +78,7 @@
                 
                 {% for product in page_obj %}
                 <div class="col">
-                    <div class="card h-100 product-item border-0 shadow-sm d-flex flex-column">
+                    <div class="card h-100 product-item product-card border-0 shadow-sm d-flex flex-column">
                         <a href="{{ product.get_url }}" class="text-decoration-none text-dark d-flex flex-column h-100">
                             <div class="d-flex justify-content-center align-items-center p-3" style="height: 200px;">
                                 <img src="{{ product.images.url }}" class="card-img-top img-fluid" alt="{{ product.product_name }}" style="max-height: 100%; width: auto; object-fit: contain;">
@@ -174,5 +175,31 @@
         </div>
     </div>
     
+
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'store/js/search.js' %}"></script>
+    <script>
+        function applySort(sortValue) {
+            // Récupère l'URL actuelle complète
+            let currentUrl = new URL(window.location.href);
+            
+            if (sortValue) {
+                // Ajoute ou met à jour le paramètre ?sort=...
+                currentUrl.searchParams.set('sort', sortValue);
+            } else {
+                // Supprime le tri si "Pertinence" est choisi
+                currentUrl.searchParams.delete('sort');
+            }
+            
+            // Très important : on remet la pagination à 1 lors d'un nouveau tri
+            currentUrl.searchParams.delete('page'); 
+            
+            // Redirection vers la nouvelle URL construite proprement
+            window.location.href = currentUrl.toString();
+        }
+    </script>
 {% endblock %}

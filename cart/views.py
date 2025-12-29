@@ -13,29 +13,31 @@ def _cart_id(request):
     return request.session['cart_id']
 
 def add_cart(request, product_id):
-    """Ajoute un produit au panier ou incrémente sa quantité."""
     product = get_object_or_404(Product, id=product_id)
     cart_id = _cart_id(request)
-    
-    # 1. Récupérer ou créer le Panier (Cart)
+    cart, _ = Cart.objects.get_or_create(cart_id=cart_id)
+
+    # Récupération des données du formulaire
+    quantity_to_add = int(request.POST.get('quantity', 1))
+    size = request.POST.get('size', '').strip()
+
+    # Si l'utilisateur n'a pas choisi de taille ou si c'est la valeur par défaut
+    if size == "Sélectionner" or not size:
+        size = "Unique" # Ou None, selon votre modèle
+
+    # On cherche un article avec le MÊME produit ET la MÊME taille
     try:
-        cart = Cart.objects.get(cart_id=cart_id)
-    except Cart.DoesNotExist:
-        cart = Cart.objects.create(cart_id=cart_id)
-        cart.save()
-    
-    # 2. Récupérer ou créer l'Article du Panier (CartItem)
-    try:
-        cart_item = CartItem.objects.get(product=product, cart=cart)
-        cart_item.quantity += 1
+        # Note : Assurez-vous d'avoir un champ 'size' dans votre modèle CartItem
+        cart_item = CartItem.objects.get(product=product, cart=cart, size=size)
+        cart_item.quantity += quantity_to_add
         cart_item.save()
     except CartItem.DoesNotExist:
         cart_item = CartItem.objects.create(
             product=product,
-            quantity=1,
-            cart=cart
+            quantity=quantity_to_add,
+            cart=cart,
+            size=size
         )
-        cart_item.save()
     
     return redirect('cart:cart_detail')
 

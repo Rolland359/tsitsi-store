@@ -1,10 +1,12 @@
-from django.db.models import F
-from django.contrib.auth.decorators import user_passes_test
-from django.urls import path, include
+# Django core imports
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import F, Q
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import path, include
+
+# Local apps imports
 from .models import Product, Category, ProductImage, ReviewAndRating, ReviewImage
 from .forms import ReviewForm, ReviewImageForm
 
@@ -20,45 +22,68 @@ def is_superuser_or_staff(user):
 @user_passes_test(is_superuser_or_staff)
 def low_stock_report(request):
     """
-    Affiche la liste des produits dont le stock actuel est
-    inférieur ou égal au seuil critique (reorder_point).
+    Affiche les produits en stock critique.
     """
-    products_to_order = Product.object.filter(stock__lte=F('reorder_point'), is_avaible=True).select_related('category').order_by('stock')
+    products_to_order = Product.objects.filter(
+        stock__lte=F('reorder_point'), 
+        is_available=True
+    ).select_related('category').order_by('stock')
 
     if not products_to_order.exists():
         messages.success(request, "Bonne nouvelle ! Aucun produit n'a atteint son seuil critique.")
 
-    context = { 'products_to_order' : products_to_order, 
-                'products_count' : products_to_order.count(),
-                'title': 'Rapport de Stock Critique'
-                }
-    return render(request, 'low_stock_report.html', context)
+    context = { 
+        'products_to_order' : products_to_order, 
+        'products_count' : products_to_order.count(),
+        'title': 'Rapport de Stock Critique'
+    }
+    return render(request, 'store/low_stock_report.html', context)
 
-# --- 1. Vue du Catalogue et Filtrage par Catégorie ---
+@user_passes_test(is_superuser_or_staff)
+def update_stock_ajax(request):
+    """
+    Traite la mise à jour rapide du stock depuis la modale.
+    """
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        new_quantity = request.POST.get('new_quantity')
+        
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            product.stock = int(new_quantity)
+            product.save()
+            
+            messages.success(request, f"Le stock de '{product.product_name}' a été mis à jour avec succès.")
+        except (ValueError, TypeError):
+            messages.error(request, "Quantité invalide. Veuillez entrer un nombre entier.")
+            
+    # Redirige vers le rapport pour voir les changements
+    return redirect('dashboard:low_stock_report')
+
+# --- 1. Vue du Catalogue (Optimisée avec Tri) ---
 def products_list_view(request, category_slug=None):
-    """
-    Affiche tous les produits ou filtre par catégorie (si category_slug est fourni).
-    Gère également la pagination.
-    """
-    categories = Category.objects.all() # Liste de toutes les catégories pour le menu latéral
+    categories = Category.objects.all()
+    sort = request.GET.get('sort') # Récupération du paramètre de tri
     
-    # Gérer le filtrage par catégorie
     if category_slug:
-        # Tente de récupérer la catégorie par son slug, ou renvoie 404
         current_category = get_object_or_404(Category, slug=category_slug)
-        # Filtre les produits : seulement ceux qui sont disponibles ET qui appartiennent à la catégorie courante
-        products = Product.objects.filter(
-            category=current_category, 
-            is_available=True
-        ).order_by('product_name')
+        products = Product.objects.filter(category=current_category, is_available=True)
         title = current_category.name
     else:
-        # Affiche tous les produits disponibles
-        products = Product.objects.filter(is_available=True).order_by('product_name')
+        products = Product.objects.filter(is_available=True)
         current_category = None
         title = "Tous les Produits"
+
+    # --- LOGIQUE DE TRI ---
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'latest':
+        products = products.order_by('-created_date')
+    else:
+        products = products.order_by('product_name') # Par défaut
     
-    # Gérer la pagination (ex: 12 produits par page)
     paginator = Paginator(products, 12) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -67,11 +92,9 @@ def products_list_view(request, category_slug=None):
         'title': title,
         'current_category': current_category,
         'categories': categories,
-        'page_obj': page_obj,          # Le set de produits pour la page courante
+        'page_obj': page_obj,
         'products_count': products.count(),
     }
-    
-    # Utilise le template catalogue.html que nous avons discuté précédemment
     return render(request, 'store/catalogue.html', context)
 
 
@@ -134,36 +157,31 @@ def category_list_view(request):
     return render(request, 'store/category_list_view.html', context)
 
 
+# --- 2. Recherche (Optimisée avec Tri) ---
 def search(request):
-    """
-    Gère la recherche de produits basée sur un terme saisi (mot-clé).
-    """
-    products = []
-    product_count = 0
-    keyword = ''
+    keyword = request.GET.get('keyword', '')
+    sort = request.GET.get('sort')
+    products = Product.objects.filter(is_available=True)
     
-    # Vérifier si la requête contient le terme 'keyword' (généralement envoyé par la barre de recherche en GET)
-    if 'keyword' in request.GET:
-        keyword = request.GET['keyword']
-        
-        # S'assurer que le mot-clé n'est pas vide
-        if keyword:
-            # Utilisation de l'objet Q pour créer une requête complexe (OR)
-            # ie. chercher le mot-clé dans le nom OU la description du produit.
-            # icontains est insensible à la casse (i pour insensitive)
-            products = Product.objects.order_by('-created_date').filter(
-                Q(description__icontains=keyword) | Q(product_name__icontains=keyword),
-                is_available=True # Ne montrer que les produits disponibles
-            )
-            product_count = products.count()
+    if keyword:
+        products = products.filter(
+            Q(description__icontains=keyword) | Q(product_name__icontains=keyword)
+        )
+
+    # Appliquer le tri même sur les résultats de recherche
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    else:
+        products = products.order_by('-created_date')
 
     context = {
         'products': products,
-        'products_count': product_count,
+        'products_count': products.count(),
         'keyword': keyword,
         'title': f'Résultats pour "{keyword}"',
     }
-    
     return render(request, 'store/search_results.html', context)
 
 
@@ -183,69 +201,30 @@ def home(request):
     }
     return render(request, 'store/home.html', context)
 
+# --- 3. Soumission d'Avis (Simplifiée) ---
 def submit_review(request, product_id):
-    """
-    Vue pour gérer la soumission d'un avis (note, commentaire, images) pour un produit spécifique.
-    """
     url = request.META.get('HTTP_REFERER') 
-
     if request.method == 'POST':
         product = get_object_or_404(Product, id=product_id)
         
-        # 1. Préparation du formulaire (modification ou nouveau)
+        # On essaie de récupérer un avis existant pour le mettre à jour, sinon on crée
         try:
-            review_object = ReviewAndRating.objects.get(user=request.user, product=product)
-            form = ReviewForm(request.POST, request.FILES, instance=review_object) 
+            review_instance = ReviewAndRating.objects.get(user=request.user, product=product)
+            form = ReviewForm(request.POST, request.FILES, instance=review_instance)
         except ReviewAndRating.DoesNotExist:
             form = ReviewForm(request.POST, request.FILES)
-        
-        # 2. Validation et Sauvegarde
-        if form.is_valid():
-            
-            # --- POINT CRUCIAL DE LA CORRECTION ---
-            
-            # Si c'est une modification, form.save(commit=False) n'est pas nécessaire.
-            # Sinon, si c'est une création, form.save(commit=False) crée l'instance.
-            if 'instance' in locals():
-                 # S'il existe (modification)
-                 data = review_object 
-            else:
-                 # S'il n'existe pas (nouveau)
-                 data = form.save(commit=False)
-            
-            # ASSIGNATION DES DONNÉES NETTOYÉES
-            
-            # La note est récupérée directement depuis form.cleaned_data,
-            # où elle est stockée par Django grâce à name="rating" dans le HTML.
-            # Utilisez .get() pour plus de sécurité.
-            data.rating = form.cleaned_data.get('rating')
-            
-            # Le commentaire est aussi récupéré ou est déjà dans 'data' si form.save() est utilisé
-            data.review = form.cleaned_data.get('review', data.review)
-            
-            # Assurer les champs utilisateur et produit (pour les nouveaux avis)
-            data.product_id = product_id
-            data.user_id = request.user.id
-            data.is_active = True
-            
-            data.save() # Sauvegarde de l'objet mis à jour
-            
-            # 3. Gestion des images jointes (inchangé)
-            for i in range(1, 4): 
-                image_key = f'image_{i}'
-                # Assurez-vous d'utiliser request.FILES ici
-                if request.FILES.get(image_key): 
-                    ReviewImage.objects.create(
-                        review=data,
-                        image=request.FILES.get(image_key)
-                    )
 
-            messages.success(request, 'Merci ! Votre avis a été soumis avec succès.')
-            return redirect(url)
-        else:
-            # En cas d'erreur de validation (vérifiez console pour form.errors)
-            print(form.errors)
-            messages.error(request, 'Erreur lors de la soumission de l\'avis. Veuillez corriger le formulaire.')
-            return redirect(url)
-            
+        if form.is_valid():
+            data = form.save(commit=False)
+            data.product = product
+            data.user = request.user
+            data.save()
+
+            # Gestion des images (boucle optimisée)
+            for i in range(1, 4):
+                image_file = request.FILES.get(f'image_{i}')
+                if image_file:
+                    ReviewImage.objects.create(review=data, image=image_file)
+
+            messages.success(request, 'Merci ! Votre avis a été enregistré.')
     return redirect(url)

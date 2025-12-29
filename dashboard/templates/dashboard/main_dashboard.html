@@ -22,7 +22,7 @@
                         </a>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-shopping-bag me-2"></i> Produits</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-boxes me-2"></i> Stocks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'admin:store_product_changelist' %}"><i class="fas fa-boxes me-2"></i> Stocks</a></li>
                     <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-truck me-2"></i> Commandes</a></li>
                     <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-users me-2"></i> Clients</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i> Administration</a></li>
@@ -180,7 +180,7 @@
                             {% endif %}
                         </div>
                         <div class="card-footer text-end">
-                            <a href="{% url 'admin:store_product_changelist' %}" class="btn btn-outline-secondary btn-sm">Gérer les Stocks</a>
+                            <a href="{% url 'store:low_stock_report' %}" class="btn btn-outline-secondary btn-sm">Rapport complet</a>
                         </div>
                     </div>
                 </div>
