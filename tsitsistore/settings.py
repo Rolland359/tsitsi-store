@@ -54,6 +54,9 @@ INSTALLED_APPS = [
 
     # AJOUTER DRF
     'rest_framework',
+    
+    # Doit être placé en dernier
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [

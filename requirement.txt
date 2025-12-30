@@ -1,4 +1,19 @@
-pip install django-chartjs
-pip install django-admin-tools
-pip install djangorestframework
-pip install django
+asgiref==3.11.0
+charset-normalizer==3.4.4
+Django==5.2.9
+django-appconf==1.2.0
+django-cleanup==9.0.0
+django-humanize==0.1.2
+django-mathfilters==1.0.0
+django-resized==1.0.3
+django-restframework==0.0.1
+django_compressor==4.6.0
+et_xmlfile==2.0.0
+humanize==4.15.0
+openpyxl==3.1.5
+pillow==12.0.0
+rcssmin==1.2.2
+reportlab==4.4.7
+rjsmin==1.2.5
+sqlparse==0.5.5
+typing_extensions==4.15.0

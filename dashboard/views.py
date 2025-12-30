@@ -42,7 +42,7 @@ def dashboard(request):
     average_order_value = round(orders_filtered.aggregate(Avg('order_total'))['order_total__avg'] or 0, 2)
     
     # --- 2. STATS GLOBALES (Indépendantes de la période) ---
-    recent_orders = Order.objects.all().order_by('-created')[:5]
+    recent_orders = Order.objects.all().select_related('user').order_by('-created')[:5]
     total_products = Product.objects.filter(is_available=True).count()
     low_stock_products = Product.objects.filter(stock__lte=F('reorder_point'), is_available=True).order_by('stock')[:10]
     total_users = CustomUser.objects.filter(is_active=True, is_staff=False).count()

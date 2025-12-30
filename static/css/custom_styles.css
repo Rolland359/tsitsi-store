@@ -284,7 +284,7 @@
     font-size: 0.6rem;
     padding: 2px 5px;
     border-radius: 50%;
-    border: 2px solid #ffffff; /* Le contour blanc qui "nettoie" l'UI */
+    border: 2px solid #5a51e0; /* Le contour blanc qui "nettoie" l'UI */
     min-width: 18px;
     height: 18px;
     display: flex;
@@ -304,3 +304,36 @@
         padding-bottom: 65px !important;
     }
 }
+
+/* ============================================================
+   9. GESTION DU message TOAST (Notifications)
+   ============================================================ */
+/* Animation de la barre de progression du message */
+/* Animation de la barre de progression du message */
+.toast {
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(5px);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    width: 100%;
+    animation: toast-timer 5s linear forwards;
+}
+
+@keyframes toast-timer {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* Couleurs personnalisées pour Django tags */
+.bg-error { background-color: #e74c3c !important; }
+.bg-success { background-color: #2ecc71 !important; }
+.bg-warning { background-color: #f1c40f !important; }
+.bg-info { background-color: #3498db !important; }
