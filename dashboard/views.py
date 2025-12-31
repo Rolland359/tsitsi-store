@@ -1,16 +1,21 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum, Avg, Count, F
+from django.db.models import Sum, Avg, Count, F, Q
 from django.db import models
 from django.utils import timezone
 from django.db.models.functions import TruncMonth, TruncDay
 from datetime import timedelta
+from django.template.loader import render_to_string
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 import json
 from orders.models import Order, OrderItem
-from store.models import Product  
+from store.models import Category, Product  
 from users.models import CustomUser 
+from django.contrib.admin.views.decorators import staff_member_required
 
+# --- FONCTIONS DE SÉCURITÉ ---
 def is_staff_member(user):
     return user.is_active and user.is_staff
     
@@ -18,9 +23,9 @@ def is_staff_member(user):
 @user_passes_test(is_staff_member)
 def dashboard(request):
     # --- LOGIQUE DE FILTRE PAR PÉRIODE ---
-    period = request.GET.get('period', 'this_month') # Par défaut : ce mois-ci
+    period = request.GET.get('period', 'this_month')
     now = timezone.now()
-    start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0) # Début du mois par défaut
+    start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     if period == 'today':
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -31,24 +36,21 @@ def dashboard(request):
     elif period == 'this_year':
         start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Filtrage de base des commandes
     orders_base = Order.objects.filter(status__in=['Completed', 'Accepted', 'New'])
-    # Filtrage par période pour les KPIs
     orders_filtered = orders_base.filter(created__gte=start_date)
 
-    # --- 1. KPIs (Période sélectionnée) ---
+    # KPIs
     total_orders = orders_filtered.count()
     total_revenue = round(orders_filtered.aggregate(Sum('order_total'))['order_total__sum'] or 0, 2)
     average_order_value = round(orders_filtered.aggregate(Avg('order_total'))['order_total__avg'] or 0, 2)
     
-    # --- 2. STATS GLOBALES (Indépendantes de la période) ---
+    # STATS GLOBALES
     recent_orders = Order.objects.all().select_related('user').order_by('-created')[:5]
     total_products = Product.objects.filter(is_available=True).count()
     low_stock_products = Product.objects.filter(stock__lte=F('reorder_point'), is_available=True).order_by('stock')[:10]
     total_users = CustomUser.objects.filter(is_active=True, is_staff=False).count()
 
-    # --- 3. GRAPHIQUES ---
-    # Top Produits sur la période
+    # GRAPHIQUES
     top_products_data = Product.objects.filter(is_available=True)\
         .annotate(total_sold=Sum('orderitem__quantity', filter=models.Q(orderitem__order__created__gte=start_date)))\
         .filter(total_sold__gt=0)\
@@ -57,7 +59,6 @@ def dashboard(request):
     top_labels = [p.product_name for p in top_products_data]
     top_quantities = [p.total_sold or 0 for p in top_products_data]
     
-    # Tendance des ventes (Groupement par jour si période courte, par mois sinon)
     if period in ['today', '7days']:
         trunc_func = TruncDay('created')
         date_format = '%d %b'
@@ -92,3 +93,70 @@ def dashboard(request):
         'title': 'Tableau de Bord Dynamique',
     }
     return render(request, 'dashboard/main_dashboard.html', context)
+
+# --- GESTION DES PRODUITS ---
+
+@staff_member_required
+def dashboard_products(request):
+    keyword = request.GET.get('keyword', '')
+    
+    # Optimisation select_related pour éviter les requêtes N+1 sur les catégories
+    products = Product.objects.select_related('category').all().order_by('-created_date')
+    categories = Category.objects.all()
+    
+    if keyword:
+        products = products.filter(
+            Q(product_name__icontains=keyword) | 
+            Q(category__name__icontains=keyword) |
+            Q(description__icontains=keyword)
+        )
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # FIX : On passe categories dans le render_to_string pour que le select s'affiche en AJAX
+        html = render_to_string('dashboard/partials/product_table_results.html', {
+            'products': products,
+            'categories': categories
+        })
+        return JsonResponse({
+            'html': html,
+            'count': products.count()
+        })
+
+    context = {
+        'products': products,
+        'active_menu': 'products',
+        'categories': categories,
+        'title': 'Gestion des Produits',
+    }
+    return render(request, 'dashboard/products.html', context)
+
+@require_POST
+@staff_member_required
+def update_product_inline(request, pk):
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        
+        product.product_name = request.POST.get('product_name', product.product_name)
+        product.price = request.POST.get('price', product.price)
+        product.stock = request.POST.get('stock', product.stock)
+        product.is_available = request.POST.get('is_available') == 'True'
+        
+        cat_id = request.POST.get('category')
+        if cat_id:
+            # Plus efficace : assignation par ID
+            product.category_id = cat_id
+        
+        if request.FILES.get('images'):
+            product.images = request.FILES.get('images')
+            
+        product.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@require_POST
+@staff_member_required
+def delete_product_inline(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.delete()
+    return JsonResponse({'status': 'success'})

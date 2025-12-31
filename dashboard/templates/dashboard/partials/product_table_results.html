@@ -1,0 +1,74 @@
+{% load humanize %}
+{% for product in products %}
+<tr id="row-{{ product.id }}" data-product-id="{{ product.id }}">
+    <td class="px-4">
+        <label for="img-{{ product.id }}" style="cursor: pointer;">
+            {% if product.images %}
+                <img src="{{ product.images.url }}" id="preview-{{ product.id }}" class="rounded shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">
+            {% else %}
+                <div id="preview-placeholder-{{ product.id }}" class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                    <i class="fas fa-image text-muted"></i>
+                </div>
+            {% endif %}
+            <input type="file" id="img-{{ product.id }}" class="d-none edit-input" data-field="images" accept="image/*" onchange="previewImage(this, {{ product.id }})">
+        </label>
+    </td>
+
+    <td>
+        <input type="text" class="form-control form-control-sm border-0 bg-transparent fw-bold edit-input text-truncate" 
+               value="{{ product.product_name }}" data-field="product_name" style="max-width: 180px;">
+        <small class="text-muted d-block">Réf: #{{ product.id }}</small>
+    </td>
+
+    <td>
+        <select class="form-select form-select-sm border-0 bg-transparent edit-input" data-field="category">
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if cat.id == product.category.id %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </td>
+
+    <td>
+        <div class="d-flex align-items-center">
+            <input type="number" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary edit-input" 
+                   value="{{ product.price|stringformat:'d' }}" data-field="price" style="width: 80px;">
+            <span class="small ms-1 text-primary fw-bold">Ar</span>
+        </div>
+    </td>
+
+    <td>
+        <input type="number" class="form-control form-control-sm border-0 bg-transparent edit-input {% if product.stock <= 5 %}text-danger fw-bold{% endif %}" 
+               value="{{ product.stock }}" data-field="stock" style="width: 60px;">
+    </td>
+
+    <td>
+        <select class="form-select form-select-sm border-0 bg-transparent edit-input" data-field="is_available">
+            <option value="True" {% if product.is_available %}selected{% endif %}>En ligne</option>
+            <option value="False" {% if not product.is_available %}selected{% endif %}>Hors ligne</option>
+        </select>
+    </td>
+
+    <td class="text-end px-4">
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-success btn-sm btn-save d-none" onclick="saveProduct({{ product.id }}, CSRF_TOKEN)" title="Enregistrer">
+                <i class="fas fa-check"></i>
+            </button>
+            <button class="btn btn-white btn-sm border text-danger" onclick="deleteProduct({{ product.id }}, CSRF_TOKEN)" title="Supprimer">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            <a href="{{ product.get_url }}" target="_blank" class="btn btn-white btn-sm border text-primary" title="Voir le produit">
+                <i class="fas fa-eye"></i>
+            </a>
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="7" class="text-center py-5">
+        <i class="fas fa-search fa-2x text-light mb-3 d-block"></i>
+        <p class="text-muted">Aucun produit ne correspond à votre recherche.</p>
+    </td>
+</tr>
+{% endfor %}
