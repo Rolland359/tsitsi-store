@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize%}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -126,7 +127,7 @@
                             
                             <div class="mt-auto">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <p class="h5 text-danger fw-bold mb-0">{{ product.price }} Ar</p>
+                                    <p class="h5 text-danger fw-bold mb-0">{{ product.price|floatformat:2|intcomma }} MGA</p>
                                     {% if product.stock == 0 %}
                                         <span class="badge bg-danger">Rupture</span>
                                     {% endif %}

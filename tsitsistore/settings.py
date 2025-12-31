@@ -54,7 +54,7 @@ INSTALLED_APPS = [
 
     # AJOUTER DRF
     'rest_framework',
-    
+
     # Doit être placé en dernier
     'django_cleanup.apps.CleanupConfig',
 ]
@@ -125,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+#LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
@@ -135,7 +135,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+LANGUAGE_CODE = 'fr-fr'  # Utilise le français pour avoir l'espace comme séparateur
 
+USE_THOUSAND_SEPARATOR = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 

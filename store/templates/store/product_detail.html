@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}{{ product.product_name }} - Détail Produit{% endblock %}
 
@@ -90,7 +91,7 @@
             {% endwith %}
             {% endwith %}
             <p class="h2 text-success fw-bolder mb-4">
-                {{ product.price }} MGA
+                {{ product.price|floatformat:2|intcomma}} MGA
             </p>
             
             <p class="lead mb-4">
