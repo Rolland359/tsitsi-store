@@ -160,3 +160,36 @@ def delete_product_inline(request, pk):
     product = get_object_or_404(Product, pk=pk)
     product.delete()
     return JsonResponse({'status': 'success'})
+
+@staff_member_required
+def stock_dashboard(request):
+    # On récupère les produits simplement pour éviter l'erreur de prefetch
+    products = Product.objects.all().select_related('category')
+    
+    # Calculs des compteurs
+    # On s'assure d'avoir 0 si le résultat est None
+    total_stock_sum = products.aggregate(Sum('stock'))['stock__sum'] or 0
+    out_of_stock_count = products.filter(stock__lte=0).count()
+    low_stock_count = products.filter(stock__gt=0, stock__lt=5).count()
+    
+    context = {
+        'products': products,
+        'total_stock_sum': total_stock_sum,
+        'out_of_stock_count': out_of_stock_count,
+        'low_stock_count': low_stock_count,
+    }
+    return render(request, 'dashboard/stock.html', context)
+
+@require_POST
+def update_stock_ajax(request):
+    data = json.loads(request.body)
+    product_id = data.get('id')
+    new_stock = data.get('new_stock')
+    
+    try:
+        product = Product.objects.get(id=product_id)
+        product.stock = new_stock
+        product.save()
+        return JsonResponse({'success': True})
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Produit non trouvé'})

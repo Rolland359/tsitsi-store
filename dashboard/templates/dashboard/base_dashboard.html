@@ -107,7 +107,7 @@ pour éviter les doublons visuels
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin:store_product_changelist' %}">
+                        <a class="nav-link {% if 'stock' in request.path %}active{% endif %}" href="{% url 'dashboard:stock' %}">
                             <i class="fas fa-boxes me-2"></i> Stocks
                         </a>
                     </li>
@@ -138,7 +138,7 @@ pour éviter les doublons visuels
                         <span>Produits</span>
                     </a>
                     
-                    <a href="{% url 'admin:store_product_changelist' %}" class="ts-db-nav-card">
+                    <a href="{% url 'dashboard:stock' %}" class="ts-db-nav-card {% if 'stock' in request.path %}ts-active{% endif %}">
                         <i class="fas fa-boxes"></i>
                         <span>Stocks</span>
                     </a>

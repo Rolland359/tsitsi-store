@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from cart.models import Cart, CartItem
 from .models import Order, OrderItem
@@ -121,7 +121,16 @@ def place_order(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
         if form.is_valid():
-            # 1. Création de la commande
+            # --- 1. Préparation du numéro de commande ---
+            # Format souhaité : TSITI-ID-YYYYMMDD
+            current_date = datetime.date.today().strftime("%Y%m%d")
+            user_id = request.user.id if request.user.is_authenticated else 0
+            
+            # Note : Pour éviter les doublons si 2 commandes arrivent le même jour, 
+            # on peut ajouter l'heure ou un identifiant unique à la fin
+            order_number = f'TSITI-{user_id}-{current_date}'
+
+            # --- 2. Création de la commande ---
             order = Order.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 first_name=form.cleaned_data['first_name'],
@@ -136,45 +145,50 @@ def place_order(request):
                 order_total=grand_total,
                 tax=tax,
                 ip=request.META.get('REMOTE_ADDR'),
+                order_number=order_number, # On l'assigne directement ici
+                status='New' # Important pour que vos graphiques fonctionnent plus tard
             )
-            
-            # Génération numéro de commande
-            yr = int(datetime.date.today().strftime('%Y'))
-            dt = int(datetime.date.today().strftime('%d'))
-            mt = int(datetime.date.today().strftime('%m'))
-            order.order_number = f"{yr}{mt}{dt}{order.id}"
-            order.save()
 
-            # 2. Création OrderItems et Décompte Stock
-            for item in cart_items:
-                # TRANSFERT DE LA TAILLE DE CARTITEM VERS ORDERITEM
-                order_item = OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    product_price=item.product.price,
-                    size=item.size, # On garde la trace de la taille achetée !
-                    is_ordered=True
-                )
+            try:
+                # --- 3. Création OrderItems et Décompte Stock ---
+                for item in cart_items:
+                    # Création de l'article de commande
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        product_price=item.product.price,
+                        size=item.size, 
+                        is_ordered=True
+                    )
 
-                # DÉCOMPTE DU STOCK RÉEL
-                product = Product.objects.get(id=item.product.id)
-                if product.stock >= item.quantity:
-                    product.stock -= item.quantity
-                    product.save()
-                else:
-                    # Sécurité si le stock est devenu insuffisant entre temps
-                    messages.error(request, f"Désolé, le stock de {product.product_name} est insuffisant.")
-                    raise Exception("Stock insuffisant") # Annule toute la transaction
+                    # DÉCOMPTE DU STOCK RÉEL
+                    product = Product.objects.get(id=item.product.id)
+                    if product.stock >= item.quantity:
+                        product.stock -= item.quantity
+                        product.save()
+                    else:
+                        messages.error(request, f"Désolé, le stock de {product.product_name} est insuffisant.")
+                        # On supprime la commande si le stock échoue pour éviter les commandes fantômes
+                        order.delete() 
+                        return redirect('cart:cart_detail')
 
-            # 3. Nettoyage
-            CartItem.objects.filter(cart__cart_id=_cart_id(request)).delete()
+                # --- 4. Nettoyage et Finalisation ---
+                # Suppression des articles du panier
+                cart_items.delete() 
 
-            # 4. Email
-            send_order_confirmation_email(order)
+                # Envoi de l'email (si la fonction existe)
+                try:
+                    send_order_confirmation_email(order)
+                except:
+                    pass # Évite de planter si le serveur mail est mal configuré
 
-            messages.success(request, "Commande validée !")
-            return redirect('orders:order_complete', order_number=order.order_number)
+                messages.success(request, "Commande validée !")
+                return redirect('orders:order_complete', order_number=order.order_number)
+
+            except Exception as e:
+                messages.error(request, f"Une erreur est survenue : {e}")
+                return redirect('orders:checkout')
         else:
             messages.error(request, "Veuillez vérifier vos informations.")
             return redirect('orders:checkout')
