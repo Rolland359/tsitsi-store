@@ -10,4 +10,6 @@ urlpatterns = [
     path('products/update/<int:pk>/', views.update_product_inline, name='update_product_inline'),
     path('products/delete/<int:pk>/', views.delete_product_inline, name='delete_product_inline'),
     path('update-stock-ajax/', views.update_stock_ajax, name='update_stock_ajax'),
+    path('orders/', views.order_dashboard, name='order_dashboard'),
+    path('orders/update/<int:order_id>/', views.update_order_status, name='update_order_status'),
 ]

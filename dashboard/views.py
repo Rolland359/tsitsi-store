@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.models.functions import TruncMonth, TruncDay
 from datetime import timedelta
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 
 import json
@@ -14,6 +14,11 @@ from orders.models import Order, OrderItem
 from store.models import Category, Product  
 from users.models import CustomUser 
 from django.contrib.admin.views.decorators import staff_member_required
+import datetime
+from django.template.loader import get_template
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
 
 # --- FONCTIONS DE SÉCURITÉ ---
 def is_staff_member(user):
@@ -51,13 +56,16 @@ def dashboard(request):
     total_users = CustomUser.objects.filter(is_active=True, is_staff=False).count()
 
     # GRAPHIQUES
-    top_products_data = Product.objects.filter(is_available=True)\
-        .annotate(total_sold=Sum('orderitem__quantity', filter=models.Q(orderitem__order__created__gte=start_date)))\
-        .filter(total_sold__gt=0)\
-        .order_by('-total_sold')[:5]
-        
-    top_labels = [p.product_name for p in top_products_data]
-    top_quantities = [p.total_sold or 0 for p in top_products_data]
+    # Calcul du top produits basé sur les OrderItem (plus fiable sur les relations)
+    top_items_qs = OrderItem.objects.filter(
+        order__created__gte=start_date,
+        product__is_available=True
+    ).values('product__id', 'product__product_name')\
+     .annotate(total_sold=Sum('quantity'))\
+     .order_by('-total_sold')[:5]
+
+    top_labels = [item['product__product_name'] for item in top_items_qs]
+    top_quantities = [int(item['total_sold']) for item in top_items_qs]
     
     if period in ['today', '7days']:
         trunc_func = TruncDay('created')
@@ -193,3 +201,113 @@ def update_stock_ajax(request):
         return JsonResponse({'success': True})
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Produit non trouvé'})
+    
+
+@staff_member_required
+def order_dashboard(request):
+    orders = Order.objects.all().order_by('-created')
+    
+    # Logique de recherche AJAX
+    query = request.GET.get('q', '')
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        orders = orders.filter(
+            Q(order_number__icontains=query) | 
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query)
+        )
+        html = render_to_string('dashboard/order_list_partial.html', {'orders': orders})
+        return JsonResponse({'html': html})
+
+    # Statistiques pour KPIs
+    total_orders = orders.count()
+    pending_orders = orders.filter(status='New').count()
+    cancelled_orders = orders.filter(status='Cancelled').count()
+    daily_rev = orders.filter(status='Completed').aggregate(Sum('order_total'))['order_total__sum'] or 0
+
+    # Données Graphique Radar (Besoin de min 3 points pour un radar)
+    top_items = OrderItem.objects.values('product__product_name').annotate(total=Sum('quantity')).order_by('-total')[:5]
+    top_names = [item['product__product_name'] for item in top_items]
+    top_counts = [item['total'] for item in top_items]
+
+    context = {
+        'orders': orders,
+        'total_orders_count': total_orders,
+        'orders_pending_count': pending_orders,
+        'orders_cancelled_count': cancelled_orders,
+        'daily_revenue': daily_rev,
+        'top_product_names': top_names,
+        'top_product_counts': top_counts,
+    }
+    return render(request, 'dashboard/order_dashboard.html', context)
+
+@staff_member_required
+@require_POST
+def update_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    new_status = request.POST.get('status')
+    
+    valid_statuses = dict(Order._meta.get_field('status').choices).keys()
+    
+    if new_status in valid_statuses:
+        order.status = new_status
+        order.save()
+        return JsonResponse({'status': 'success', 'message': f'Commande #{order.order_number} mise à jour.'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Statut invalide.'}, status=400)
+
+
+def generate_invoice_pdf(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    order_items = OrderItem.objects.filter(order=order)
+
+    # Créer la réponse HTTP avec le type PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="facture_{order_number}.pdf"'
+
+    # Créer le canevas PDF
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # --- Header ---
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(50, height - 50, "TSITSI STORE")
+    
+    p.setFont("Helvetica", 12)
+    p.drawString(50, height - 80, f"Facture N°: {order.order_number}")
+    p.drawString(50, height - 100, f"Date: {order.created.strftime('%d/%m/%Y')}")
+    p.drawString(50, height - 120, f"Client: {order.full_name()}")
+
+    # --- Tableau des produits ---
+    y = height - 160
+    p.line(50, y, 550, y) # Ligne de séparation
+    y -= 20
+    
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(50, y, "Produit")
+    p.drawString(300, y, "Qté")
+    p.drawString(400, y, "Prix Unit.")
+    p.drawString(500, y, "Total")
+    
+    y -= 20
+    p.setFont("Helvetica", 10)
+    
+    for item in order_items:
+        product_name = item.product.product_name if item.product else 'Produit supprimé'
+        p.drawString(50, y, product_name[:40])
+        p.drawString(300, y, str(item.quantity))
+        p.drawString(400, y, f"{item.product_price} Ar")
+        p.drawString(500, y, f"{item.sub_total()} Ar")
+        y -= 20
+        if y < 50: # Nouvelle page si nécessaire
+            p.showPage()
+            y = height - 50
+
+    # --- Total Final ---
+    y -= 20
+    p.line(50, y + 15, 550, y + 15)
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(350, y, f"TOTAL GENERAL: {order.order_total} Ar")
+
+    p.showPage()
+    p.save()
+    return response

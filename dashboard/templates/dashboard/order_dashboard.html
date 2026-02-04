@@ -1,0 +1,313 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des Commandes | Tsitsi Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- THEME BEIGE SABLE PROFESSIONNEL --- */
+    :root {
+        --beige-main: #F9F7F2;
+        --beige-darker: #F1EDE3;
+        --beige-border: #E9E4D9;
+        --text-earth: #4A453C;
+        --text-muted-soft: #8B8579;
+    }
+
+    body { background-color: #fcfbf9; }
+
+    /* CAROUSEL MOBILE POUR KPIS */
+    @media (max-width: 768px) {
+        .ts-kpi-carousel {
+            display: flex !important;
+            flex-wrap: nowrap !important; /* Empêche le retour à la ligne */
+            overflow-x: auto !important; /* Active le défilement horizontal */
+            padding: 10px !important;
+            gap: 15px !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        .kpi-item {
+            flex: 0 0 75% !important; /* Chaque carte prend 75% de la largeur */
+            max-width: 75% !important;
+        }
+    }
+
+    /* Cartes personnalisées */
+    .custom-card {
+        background-color: var(--beige-main) !important;
+        border: 1px solid var(--beige-border) !important;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+        transition: transform 0.2s ease;
+    }
+
+    .card-title-custom {
+        color: var(--text-earth) !important;
+        font-weight: 700;
+    }
+    /* Style du Tableau de Commandes */
+    .table-custom { background-color: transparent !important; }
+    
+    .table-custom thead th {
+        background-color: var(--beige-darker) !important;
+        color: var(--text-muted-soft) !important;
+        border-bottom: 2px solid var(--beige-border) !important;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 15px;
+    }
+
+    .table-custom td {
+        border-bottom: 1px solid var(--beige-border) !important;
+        color: var(--text-earth);
+        padding: 15px;
+    }
+
+    /* Status Badges */
+    .badge-status {
+        padding: 0.5em 0.8em;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    /* Actions */
+    .btn-action {
+        background: var(--beige-darker);
+        border: none;
+        color: var(--text-earth);
+        transition: 0.2s;
+    }
+    .btn-action:hover { background: var(--beige-border); }
+
+    /* Ajustement Graphique */
+    #topProductsChartContainer {
+        min-height: 400px;
+    }
+
+    /* Animation de chargement pour AJAX */
+    .loading-fade { opacity: 0.5; pointer-events: none; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="row g-3 ts-kpi-carousel">
+            <div class="col-md-3 kpi-item">
+                <div class="p-4 custom-card text-center h-100">
+                    <div class="rounded-circle bg-light-primary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                        <i class="fas fa-shopping-cart text-primary"></i>
+                    </div>
+                    <small class="text-muted-soft d-block text-uppercase fw-bold">Total Commandes</small>
+                    <h3 class="fw-bold mb-0 text-dark">{{ total_orders_count|default:"0" }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3 kpi-item">
+                <div class="p-4 custom-card text-center h-100" style="border-left: 4px solid #0d6efd !important;">
+                    <div class="rounded-circle bg-light-info mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                        <i class="fas fa-clock text-info"></i>
+                    </div>
+                    <small class="text-muted-soft d-block text-uppercase fw-bold">À Valider</small>
+                    <h3 class="fw-bold mb-0" style="color: #0d6efd;">{{ orders_pending_count|default:"0" }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3 kpi-item">
+                <div class="p-4 custom-card text-center h-100">
+                    <div class="rounded-circle bg-light-danger mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                        <i class="fas fa-times-circle text-danger"></i>
+                    </div>
+                    <small class="text-muted-soft d-block text-uppercase fw-bold">Annulées</small>
+                    <h3 class="fw-bold mb-0 text-danger">{{ orders_cancelled_count|default:"0" }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3 kpi-item">
+                <div class="p-4 custom-card text-center h-100">
+                    <div class="rounded-circle bg-light-success mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                        <i class="fas fa-money-bill-wave text-success"></i>
+                    </div>
+                    <small class="text-muted-soft d-block text-uppercase fw-bold">CA du Jour</small>
+                    <h3 class="fw-bold mb-0 kpi-value">{{ daily_revenue|default:"0"|intcomma }} <small class="fs-6">Ar</small></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+        <div class="card custom-card">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h5 class="card-title-custom mb-0"><i class="fas fa-truck-loading me-2 text-primary"></i>Flux de Commandes</h5>
+                <div class="d-flex gap-2 w-sm-100">
+                    <div class="input-group input-group-sm shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                        <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="orderSearchInput" class="form-control border-0 bg-white" placeholder="Rechercher...">
+                    </div>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3" id="refreshTable">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body px-0">
+                <div class="table-responsive" id="tableContainer">
+                    <table class="table table-custom align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Total</th>
+                                <th>Statut</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                            {% for order in orders %}
+                            <tr>
+                                <td class="fw-bold" style="color: #0d6efd;">#{{ order.order_number }}</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">{{ order.first_name }} {{ order.last_name }}</span>
+                                        <small class="text-muted-soft">{{ order.phone }}</small>
+                                    </div>
+                                </td>
+                                <td class="fw-bold">{{ order.order_total|intcomma }} Ar</td>
+                                <td>
+                                    <select class="form-select form-select-sm border-0 bg-white shadow-sm status-select" 
+                                            data-order-id="{{ order.id }}" style="width: 130px; border-radius: 8px;">
+                                        <option value="New" {% if order.status == 'New' %}selected{% endif %}>Nouvelle</option>
+                                        <option value="Accepted" {% if order.status == 'Accepted' %}selected{% endif %}>Acceptée</option>
+                                        <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Terminée</option>
+                                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Annulée</option>
+                                    </select>
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-action btn-sm rounded-circle" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 15px;">
+                                            <li><a class="dropdown-item py-2" href="#"><i class="fas fa-eye me-2 text-primary"></i> Détails</a></li>
+                                            <li><a class="dropdown-item py-2" href="#"><i class="fas fa-file-invoice me-2 text-success"></i> Facture</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item py-2 text-danger" href="#"><i class="fas fa-ban me-2"></i> Annuler</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-5">Aucune commande.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="card custom-card h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h6 class="card-title-custom mb-0"><i class="fas fa-chart-pie me-2 text-warning"></i>Performance Produits</h6>
+            </div>
+            <div class="card-body">
+                <div id="topProductsChartContainer" style="position: relative;">
+                    <canvas id="performanceRadarChart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <h6 class="text-muted-soft small text-uppercase fw-bold mb-3">Réapprovisionnement</h6>
+                    {% for product in low_stock_products %}
+                    <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: var(--beige-darker);">
+                        <span class="small fw-bold">{{ product.product_name|truncatechars:15 }}</span>
+                        <span class="badge bg-danger rounded-pill">{{ product.stock }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // 1. RECHERCHE AJAX
+    document.getElementById('ajaxSearch').addEventListener('keyup', function(e) {
+        fetch(`?q=${e.target.value}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+        .then(res => res.json())
+        .then(data => { document.getElementById('orderTableBody').innerHTML = data.html; });
+    });
+
+    // 2. CHANGEMENT DE STATUT SANS RECHARGEMENT
+    function initStatusChange() {
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const orderId = this.dataset.orderId;
+                const newStatus = this.value;
+                
+                fetch(`/orders/dashboard/update-status/${orderId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `status=${newStatus}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        // Optionnel : Notification Toast
+                        console.log("Statut mis à jour");
+                    }
+                });
+            });
+        });
+    }
+    initStatusChange();
+
+    // 3. GRAPHIQUE RADAR (SPIDER) PERFORMANCE
+    const radarCtx = document.getElementById('performanceRadarChart').getContext('2d');
+    
+    // Données venant de Django
+    const productLabels = {{ top_product_names|safe|default:"[]" }};
+    const productSales = {{ top_product_counts|safe|default:"[]" }};
+    if (radarCtx) {
+        // Debug: affiche dans la console pour vérifier si les données arrivent
+        console.log("Labels:", {{ top_product_names|safe }});
+        console.log("Data:", {{ top_product_counts|safe }});
+
+        const productLabels = {{ top_product_names|safe|default:"['Aucun', 'Produit', 'Vendu']" }};
+        const productSales = {{ top_product_counts|safe|default:"[0, 0, 0]" }};
+
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: productLabels,
+                datasets: [{
+                    label: 'Volume de Ventes',
+                    data: productSales,
+                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                    borderColor: '#0d6efd',
+                    pointBackgroundColor: '#0d6efd',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...productSales) + 2, // Ajuste l'échelle automatiquement
+                        angleLines: { color: '#E9E4D9' },
+                        grid: { color: '#E9E4D9' },
+                        pointLabels: { color: '#8B8579', font: { size: 10 } }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+}
+</script>
+{% endblock %}

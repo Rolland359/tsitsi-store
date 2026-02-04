@@ -111,9 +111,9 @@ pour éviter les doublons visuels
                             <i class="fas fa-boxes me-2"></i> Stocks
                         </a>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-truck me-2"></i> Commandes</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-users me-2"></i> Clients</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i> Administration</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'order' in request.path %}active{% endif %}" href="{% url 'dashboard:order_dashboard' %}"><i class="fas fa-truck me-2"></i> Commandes</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'clients' in request.path %}active{% endif %}" href="#"><i class="fas fa-users me-2"></i> Clients</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'admin' in request.path %}active{% endif %}" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i> Administration</a></li>
                 </ul>
             </div>
         </nav>
@@ -143,7 +143,7 @@ pour éviter les doublons visuels
                         <span>Stocks</span>
                     </a>
                     
-                    <a href="#" class="ts-db-nav-card">
+                    <a href="{% url 'dashboard:order_dashboard' %}" class="ts-db-nav-card {% if 'orders' in request.path %}ts-active{% endif %}">
                         <i class="fas fa-truck"></i>
                         <span>Livraisons</span>
                     </a>
