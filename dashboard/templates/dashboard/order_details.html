@@ -1,0 +1,226 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Informations de la commande -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm rounded-4">
+        <div class="card-header bg-primary text-white rounded-top-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-1">
+                <i class="fas fa-receipt me-2"></i> Commande #{{ order.order_number }}
+              </h4>
+              <small>{{ order.created|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-light text-dark fs-6">{{ order.get_status_display }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Client Info -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-muted text-uppercase fw-bold mb-3">Informations Clients</h6>
+              <p class="mb-1">
+                <strong>Nom:</strong> {{ order.first_name }} {{ order.last_name }}
+              </p>
+              <p class="mb-1">
+                <strong>Email:</strong> <a href="mailto:{{ order.email }}">{{ order.email }}</a>
+              </p>
+              <p class="mb-1">
+                <strong>Téléphone:</strong> {{ order.phone }}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted text-uppercase fw-bold mb-3">Adresse de Livraison</h6>
+              <p class="mb-1">{{ order.address_line_1 }}</p>
+              {% if order.address_line_2 %}<p class="mb-1">{{ order.address_line_2 }}</p>{% endif %}
+              <p class="mb-1">{{ order.city }}, {{ order.state }}</p>
+              <p class="mb-1">{{ order.country }}, {{ order.postal_code }}</p>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Articles de la commande -->
+          <h6 class="text-muted text-uppercase fw-bold mb-3">Articles Commandés</h6>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Produit</th>
+                  <th class="text-center">Quantité</th>
+                  <th class="text-end">Prix Unitaire</th>
+                  <th class="text-end">Sous-total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in order_items %}
+                <tr>
+                  <td>
+                    <strong>{{ item.product.product_name }}</strong>
+                    {% if item.size %}<br><small class="text-muted">Taille: {{ item.size }}</small>{% endif %}
+                  </td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-end">{{ item.product_price|intcomma }} Ar</td>
+                  <td class="text-end fw-bold">{{ item.sub_total|intcomma }} Ar</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">
+                    <i class="fas fa-inbox"></i> Aucun article
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <hr>
+
+          <!-- Résumé financier -->
+          <div class="row justify-content-end">
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Sous-total:</span>
+                <strong>{{ order.order_total|intcomma }} Ar</strong>
+              </div>
+              {% if order.shipping_cost %}
+              <div class="d-flex justify-content-between mb-2">
+                <span>Frais de port:</span>
+                <strong>{{ order.shipping_cost|intcomma }} Ar</strong>
+              </div>
+              {% endif %}
+              {% if order.tax %}
+              <div class="d-flex justify-content-between mb-2">
+                <span>Taxe:</span>
+                <strong>{{ order.tax|intcomma }} Ar</strong>
+              </div>
+              {% endif %}
+              <div class="border-top pt-2 d-flex justify-content-between">
+                <h6 class="mb-0">Total:</h6>
+                <h6 class="mb-0 text-primary">{{ order.order_total|intcomma }} Ar</h6>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paiement -->
+          <hr>
+          <h6 class="text-muted text-uppercase fw-bold mb-3">Paiement</h6>
+          <p class="mb-0">
+            <strong>Méthode:</strong> 
+            {% if order.payment_method %}
+              <span class="badge bg-info">{{ order.payment_method }}</span>
+            {% else %}
+              <span class="badge bg-secondary">Non spécifié</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Actions -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm rounded-4 sticky-top" style="top: 20px;">
+        <div class="card-header bg-light">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-cogs me-2"></i> Actions
+          </h6>
+        </div>
+        <div class="card-body">
+          <!-- Statut -->
+          <div class="mb-4">
+            <label class="form-label text-muted text-uppercase fw-bold small">Statut Actuel</label>
+            <form method="post" action="{% url 'dashboard:update_order_status' order.id %}" class="d-flex gap-2">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm flex-grow-1">
+                <option value="New" {% if order.status == 'New' %}selected{% endif %}>Nouvelle</option>
+                <option value="Accepted" {% if order.status == 'Accepted' %}selected{% endif %}>Acceptée</option>
+                <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Terminée</option>
+                <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Annulée</option>
+              </select>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-check"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- Boutons d'action -->
+          <div class="d-grid gap-2">
+            <a href="{% url 'dashboard:download_order_invoice' order.id %}" class="btn btn-outline-success btn-sm">
+              <i class="fas fa-file-pdf me-2"></i> Télécharger Facture
+            </a>
+            <a href="{% url 'dashboard:order_dashboard' %}" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-arrow-left me-2"></i> Retour aux Commandes
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteOrderModal">
+              <i class="fas fa-trash me-2"></i> Supprimer
+            </button>
+          </div>
+
+          <!-- Info Box -->
+          <div class="alert alert-info mt-3 small" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Info:</strong> Modifiez le statut et cliquez sur le bouton pour enregistrer les changements.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteOrderModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i> Supprimer la Commande
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Êtes-vous sûr de vouloir supprimer la commande <strong>#{{ order.order_number }}</strong> ?
+          <br>
+          <small class="text-muted">Cette action est <strong>irréversible</strong>.</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="post" action="{% url 'dashboard:delete_order' order.id %}" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i> Supprimer définitivement
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .card {
+    border: none;
+    border-radius: 1rem;
+  }
+  
+  .table-sm {
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 768px) {
+    .sticky-top {
+      position: static !important;
+      margin-top: 2rem;
+    }
+  }
+</style>
+
+{% endblock %}

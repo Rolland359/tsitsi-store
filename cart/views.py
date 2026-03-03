@@ -86,7 +86,7 @@ def remove_cart(request, product_id, cart_item_id):
     return redirect('cart:cart_detail')
 
 
-def full_remove(request, product_id):
+def full_remove(request, product_id, cart_item_id):
     """Supprime complètement le CartItem du panier."""
     cart = Cart.objects.get(cart_id=_cart_id(request))
     product = get_object_or_404(Product, id=product_id)

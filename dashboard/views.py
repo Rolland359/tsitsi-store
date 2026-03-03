@@ -14,13 +14,13 @@ import json
 from orders.models import Order, OrderItem
 from store.models import Category, Product  
 from users.models import CustomUser 
+from .forms import UserForm
 from django.contrib.admin.views.decorators import staff_member_required
 import datetime
 from django.template.loader import get_template
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from .forms import UserForm
 
 # --- FONCTIONS DE SÉCURITÉ ---
 def is_staff_member(user):
@@ -226,10 +226,23 @@ def order_dashboard(request):
     cancelled_orders = orders.filter(status='Cancelled').count()
     daily_rev = orders.filter(status='Completed').aggregate(Sum('order_total'))['order_total__sum'] or 0
 
-    # Données Graphique Radar (Besoin de min 3 points pour un radar)
-    top_items = OrderItem.objects.values('product__product_name').annotate(total=Sum('quantity')).order_by('-total')[:5]
+    # Données Graphique Radar pour Performance Produits (Besoin de min 3 points pour un radar)
+    top_items = OrderItem.objects.filter(
+        product__is_available=True
+    ).values('product__product_name', 'product__id').annotate(
+        total=Sum('quantity')
+    ).order_by('-total')[:8]
+    
     top_names = [item['product__product_name'] for item in top_items]
-    top_counts = [item['total'] for item in top_items]
+    top_counts = [int(item['total'] or 0) for item in top_items]
+    
+    # Données Réapprovisionnement - Produits en faible stock
+    low_stock_products = Product.objects.filter(
+        stock__lte=F('reorder_point'),
+        is_available=True
+    ).values(
+        'id', 'product_name', 'stock', 'reorder_point', 'price'
+    ).order_by('stock')[:10]
 
     context = {
         'orders': orders,
@@ -239,6 +252,7 @@ def order_dashboard(request):
         'daily_revenue': daily_rev,
         'top_product_names': top_names,
         'top_product_counts': top_counts,
+        'low_stock_products': low_stock_products,
     }
     return render(request, 'dashboard/order_dashboard.html', context)
 
@@ -253,9 +267,52 @@ def update_order_status(request, order_id):
     if new_status in valid_statuses:
         order.status = new_status
         order.save()
-        return JsonResponse({'status': 'success', 'message': f'Commande #{order.order_number} mise à jour.'})
+        return JsonResponse({'status': 'success', 'message': f'Commande #{order.order_number} mise à jour.'}, json_dumps_params={'ensure_ascii': False})
     
-    return JsonResponse({'status': 'error', 'message': 'Statut invalide.'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Statut invalide.'}, status=400, json_dumps_params={'ensure_ascii': False})
+
+
+@staff_member_required
+def order_details(request, order_id):
+    """Affiche les détails complets d'une commande."""
+    order = get_object_or_404(Order, id=order_id)
+    order_items = OrderItem.objects.filter(order=order).select_related('product')
+    
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'title': f'Détails de la Commande #{order.order_number}',
+    }
+    return render(request, 'dashboard/order_details.html', context)
+
+
+@staff_member_required
+def download_order_invoice(request, order_id):
+    """Télécharge la facture PDF d'une commande."""
+    order = get_object_or_404(Order, id=order_id)
+    return generate_invoice_pdf(request, order.order_number)
+
+
+@staff_member_required
+@require_POST
+def delete_order(request, order_id):
+    """Supprime une commande (AJAX ou POST)."""
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        order_number = order.order_number
+        order.delete()
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success', 'message': f'Commande #{order_number} supprimée.'})
+        else:
+            messages.success(request, f'Commande #{order_number} supprimée avec succès.')
+            return redirect('dashboard:order_dashboard')
+    except Exception as e:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        else:
+            messages.error(request, f'Erreur: {str(e)}')
+            return redirect('dashboard:order_dashboard')
 
 
 def generate_invoice_pdf(request, order_number):
@@ -293,22 +350,60 @@ def generate_invoice_pdf(request, order_number):
     y -= 20
     p.setFont("Helvetica", 10)
     
+    subtotal = 0
     for item in order_items:
         product_name = item.product.product_name if item.product else 'Produit supprimé'
+        item_total = item.sub_total()
+        subtotal += float(item_total) if item_total else 0
+        
         p.drawString(50, y, product_name[:40])
         p.drawString(300, y, str(item.quantity))
         p.drawString(400, y, f"{item.product_price} Ar")
         p.drawString(500, y, f"{item.sub_total()} Ar")
         y -= 20
-        if y < 50: # Nouvelle page si nécessaire
+        if y < 100: # Nouvelle page si nécessaire
             p.showPage()
             y = height - 50
 
-    # --- Total Final ---
+    # --- Calcul TVA et Total ---
+    tva_rate = 0.20  # TVA à 20%
+    tva_amount = subtotal * tva_rate
+    total_ttc = subtotal + tva_amount
+
+    # --- Total HT, TVA, TTC ---
     y -= 20
     p.line(50, y + 15, 550, y + 15)
+    
+    p.setFont("Helvetica", 11)
+    p.rightString(550, y, f"Sous-Total HT: {subtotal:,.2f} Ar")
+    
+    y -= 20
+    p.setFont("Helvetica-Bold", 11)
+    p.rightString(550, y, f"TVA (20%): {tva_amount:,.2f} Ar")
+    
+    y -= 25
+    p.line(50, y + 15, 550, y + 15)
     p.setFont("Helvetica-Bold", 14)
-    p.drawString(350, y, f"TOTAL GENERAL: {order.order_total} Ar")
+    p.rightString(550, y, f"TOTAL TTC: {total_ttc:,.2f} Ar")
+    
+    # --- Pied de Page (Infos Entreprise) ---
+    footer_y = 50
+    p.line(50, footer_y + 30, 550, footer_y + 30)
+    
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(50, footer_y + 15, "TSITSI STORE")
+    
+    p.setFont("Helvetica", 9)
+    p.drawString(50, footer_y, "Adresse: Antananarivo, Madagascar")
+    p.drawString(300, footer_y, "Téléphone: +261 20 XX XX XX XX")
+    
+    footer_y -= 15
+    p.drawString(50, footer_y, "Email: info@tsitsistore.mg")
+    p.drawString(300, footer_y, "SIRET: XXXXXXXXXX")
+    
+    footer_y -= 15
+    p.drawString(50, footer_y, "Merci pour votre achat!")
+    p.drawString(300, footer_y, f"Généré le: {order.created.strftime('%d/%m/%Y %H:%M')}")
 
     p.showPage()
     p.save()

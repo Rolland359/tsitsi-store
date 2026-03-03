@@ -46,3 +46,64 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+    // Toast helper (Bootstrap 5) - creates container if missing and shows a toast
+    function ensureToastContainer() {
+        let wrapper = document.getElementById('ts-toast-wrapper');
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.id = 'ts-toast-wrapper';
+            wrapper.className = 'position-fixed top-0 end-0 p-3';
+            wrapper.style.zIndex = 1080;
+            const inner = document.createElement('div');
+            inner.id = 'ts-toast-container';
+            wrapper.appendChild(inner);
+            document.body.appendChild(wrapper);
+        }
+        // Make visible when created or if hidden
+        wrapper.style.display = 'block';
+        return document.getElementById('ts-toast-container');
+    }
+
+    function showToast(message, title = '', type = 'info', autohide = true, delay = 5000) {
+        const container = ensureToastContainer();
+        const toast = document.createElement('div');
+        let bgClass = 'bg-primary text-white';
+        if (type === 'success') bgClass = 'bg-success text-white';
+        if (type === 'danger') bgClass = 'bg-danger text-white';
+        if (type === 'warning') bgClass = 'bg-warning text-dark';
+
+        toast.className = 'toast align-items-center ' + bgClass + ' border-0';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        const inner = document.createElement('div');
+        inner.className = 'd-flex';
+
+        const body = document.createElement('div');
+        body.className = 'toast-body';
+        if (title) {
+            const strong = document.createElement('strong');
+            strong.className = 'me-2';
+            strong.textContent = title + ':';
+            body.appendChild(strong);
+        }
+        body.appendChild(document.createTextNode(' ' + message));
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-close btn-close-white me-2 m-auto';
+        btn.setAttribute('data-bs-dismiss', 'toast');
+        btn.setAttribute('aria-label', 'Close');
+
+        inner.appendChild(body);
+        inner.appendChild(btn);
+        toast.appendChild(inner);
+
+        container.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast, { autohide: autohide, delay: delay });
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', function () { toast.remove(); });
+        return bsToast;
+    }
