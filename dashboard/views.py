@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum, Avg, Count, F, Q
 from django.db import models
@@ -8,7 +8,8 @@ from datetime import timedelta
 from django.template.loader import render_to_string
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
-
+from django.core.paginator import Paginator
+from django.contrib import messages
 import json
 from orders.models import Order, OrderItem
 from store.models import Category, Product  
@@ -19,6 +20,7 @@ from django.template.loader import get_template
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+from .forms import UserForm
 
 # --- FONCTIONS DE SÉCURITÉ ---
 def is_staff_member(user):
@@ -311,3 +313,123 @@ def generate_invoice_pdf(request, order_number):
     p.showPage()
     p.save()
     return response
+
+
+@staff_member_required
+def dashboard_users(request):
+    """Affiche la liste des utilisateurs (avec recherche et pagination)."""
+    query = request.GET.get('q', '')
+    users_qs = CustomUser.objects.all().order_by('-date_joined')
+
+    if query:
+        users_qs = users_qs.filter(
+            Q(email__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(username__icontains=query)
+        )
+
+    paginator = Paginator(users_qs, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('dashboard/partials/user_table_results.html', {'users': page_obj})
+        return JsonResponse({'html': html, 'count': users_qs.count()})
+
+    context = {
+        'users': page_obj,
+        'active_menu': 'clients',
+        'title': 'Gestion des Clients',
+    }
+    return render(request, 'dashboard/users.html', context)
+
+
+@require_POST
+@staff_member_required
+def update_user_inline(request, pk):
+    """Endpoint AJAX pour modifier uniquement l'état actif/staff depuis la table."""
+    try:
+        user = get_object_or_404(CustomUser, pk=pk)
+
+        # Empêcher la désactivation/suppression de soi-même via cette route
+        if user == request.user and request.POST.get('is_active') == 'False':
+            return JsonResponse({'status': 'error', 'message': "Impossible de désactiver votre propre compte."}, status=400)
+
+        is_active = request.POST.get('is_active')
+        is_staff = request.POST.get('is_staff')
+
+        if is_active is not None:
+            user.is_active = (is_active == 'True')
+        if is_staff is not None:
+            user.is_staff = (is_staff == 'True')
+
+        user.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@require_POST
+@staff_member_required
+def delete_user_inline(request, pk):
+    user = get_object_or_404(CustomUser, pk=pk)
+    if user == request.user:
+        return JsonResponse({'status': 'error', 'message': "Impossible de supprimer votre propre compte."}, status=400)
+    if user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': "Impossible de supprimer un superuser."}, status=400)
+
+    user.delete()
+    return JsonResponse({'status': 'success'})
+
+
+@staff_member_required
+def create_user(request):
+    """Créer un nouvel utilisateur via le dashboard."""
+    if request.method == 'POST':
+        form = UserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f"Utilisateur {user.email} créé avec succès.")
+            return redirect('dashboard:clients')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = UserForm()
+
+    context = {
+        'form': form,
+        'title': 'Créer un nouvel utilisateur',
+        'page_title': 'Créer un utilisateur',
+        'is_create': True,
+    }
+    return render(request, 'dashboard/user_form.html', context)
+
+
+@staff_member_required
+def edit_user(request, pk):
+    """Modifier un utilisateur existant."""
+    user = get_object_or_404(CustomUser, pk=pk)
+    
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Utilisateur {user.email} mis à jour avec succès.")
+            return redirect('dashboard:clients')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = UserForm(instance=user)
+
+    context = {
+        'form': form,
+        'title': f'Modifier {user.email}',
+        'page_title': f'Modifier {user.email}',
+        'is_create': False,
+    }
+    return render(request, 'dashboard/user_form.html', context)

@@ -1,0 +1,175 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <!-- Messages d'alerte -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- En-tête avec titre et bouton créer -->
+      <div class="row mb-4 align-items-center">
+        <div class="col-md-6 col-sm-12 mb-3 mb-md-0">
+          <h4 class="card-title text-dark fw-bold">
+            <i class="fas fa-users me-2 text-primary"></i> Liste des utilisateurs
+          </h4>
+        </div>
+        <div class="col-md-6 col-sm-12">
+          <a href="{% url 'dashboard:create_user' %}" class="btn btn-success btn-lg w-100">
+            <i class="fas fa-plus me-2"></i> Créer un utilisateur
+          </a>
+        </div>
+      </div>
+
+      <!-- Barre de recherche responsive -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <form id="user-search-form" class="row g-2" method="get">
+            <div class="col-sm-12 col-md-9">
+              <input name="q" class="form-control form-control-lg" placeholder="🔍 Recherche (email, nom, username)" value="{{ request.GET.q }}">
+            </div>
+            <div class="col-sm-12 col-md-3">
+              <button type="submit" class="btn btn-primary btn-lg w-100">Rechercher</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tableau responsive -->
+      <div class="table-responsive" id="user-table-container">
+        {% include 'dashboard/partials/user_table_results.html' with users=users %}
+      </div>
+
+      <!-- Pagination -->
+      {% if users.has_other_pages %}
+        <nav aria-label="Navigation pagination" class="mt-4">
+          <ul class="pagination justify-content-center flex-wrap">
+            {% if users.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                  <i class="fas fa-chevron-left"></i> Précédent
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i> Précédent</span>
+              </li>
+            {% endif %}
+
+            <li class="page-item active px-3">
+              <span class="page-link">Page {{ users.number }}/{{ users.paginator.num_pages }}</span>
+            </li>
+
+            {% if users.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                  Suivant <i class="fas fa-chevron-right"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <span class="page-link">Suivant <i class="fas fa-chevron-right"></i></span>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Recherche AJAX responsive
+document.getElementById('user-search-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  const q = this.q.value;
+  fetch(`${location.pathname}?q=${encodeURIComponent(q)}`, {
+    headers: {'x-requested-with': 'XMLHttpRequest'}
+  })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('user-table-container').innerHTML = data.html;
+    })
+    .catch(err => console.error('Erreur AJAX:', err));
+});
+
+// Activer/désactiver utilisateur
+function toggleUser(pk, field, el){
+  const val = el.checked ? 'True' : 'False';
+  const fd = new FormData();
+  fd.append(field, val);
+
+  fetch(`/dashboard/clients/update/${pk}/`, {
+    method: 'POST', 
+    body: fd, 
+    headers: {'X-CSRFToken': getCookie('csrftoken')}
+  })
+    .then(r => r.json())
+    .then(data => {
+      if(data.status !== 'success') {
+        alert(data.message || 'Erreur lors de la mise à jour');
+        el.checked = !el.checked;
+      }
+    })
+    .catch(err => {
+      console.error('Erreur:', err);
+      el.checked = !el.checked;
+      alert('Erreur réseau');
+    });
+}
+
+// Supprimer utilisateur avec confirmation
+function deleteUser(pk){
+  if(!confirm('⚠️ Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) return;
+  
+  const fd = new FormData();
+  fetch(`/dashboard/clients/delete/${pk}/`, {
+    method: 'POST', 
+    body: fd, 
+    headers: {'X-CSRFToken': getCookie('csrftoken')}
+  })
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'success') {
+        location.reload();
+      } else {
+        alert(data.message || 'Erreur lors de la suppression');
+      }
+    })
+    .catch(err => {
+      console.error('Erreur:', err);
+      alert('Erreur réseau');
+    });
+}
+
+// Accéder à la page d'édition
+function editUser(pk){
+  window.location.href = `/dashboard/clients/edit/${pk}/`;
+}
+
+// Obtenir le cookie CSRF
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+{% endblock %}

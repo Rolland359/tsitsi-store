@@ -112,7 +112,7 @@ pour éviter les doublons visuels
                         </a>
                     </li>
                     <li class="nav-item"><a class="nav-link {% if 'order' in request.path %}active{% endif %}" href="{% url 'dashboard:order_dashboard' %}"><i class="fas fa-truck me-2"></i> Commandes</a></li>
-                    <li class="nav-item"><a class="nav-link {% if 'clients' in request.path %}active{% endif %}" href="#"><i class="fas fa-users me-2"></i> Clients</a></li>
+                    <li class="nav-item"><a class="nav-link {% if 'clients' in request.path %}active{% endif %}" href="{% url 'dashboard:clients' %}"><i class="fas fa-users me-2"></i> Clients</a></li>
                     <li class="nav-item"><a class="nav-link {% if 'admin' in request.path %}active{% endif %}" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i> Administration</a></li>
                 </ul>
             </div>
@@ -148,7 +148,7 @@ pour éviter les doublons visuels
                         <span>Livraisons</span>
                     </a>
                     
-                    <a href="#" class="ts-db-nav-card">
+                    <a href="{% url 'dashboard:clients' %}" class="ts-db-nav-card {% if 'clients' in request.path %}ts-active{% endif %}">
                         <i class="fas fa-users"></i>
                         <span>Clients</span>
                     </a>

@@ -1,0 +1,262 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-lg-8 col-xl-6 mx-auto">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-{% if is_create %}plus{% else %}edit{% endif %} me-2"></i>
+            {{ page_title }}
+          </h4>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Messages d'erreur/succès -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>Erreur :</strong>
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endif %}
+
+          <form method="post" action="" class="needs-validation">
+            {% csrf_token %}
+
+            <!-- Email -->
+            <div class="mb-3">
+              <label for="{{ form.email.id_for_label }}" class="form-label">
+                <i class="fas fa-envelope me-1"></i> Email
+                <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="email" 
+                class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
+                id="{{ form.email.id_for_label }}"
+                name="email"
+                value="{{ form.email.value|default:'' }}"
+                placeholder="utilisateur@exemple.com"
+                required>
+              {% if form.email.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.email.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Username -->
+            <div class="mb-3">
+              <label for="{{ form.username.id_for_label }}" class="form-label">
+                <i class="fas fa-user me-1"></i> Username
+                <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                id="{{ form.username.id_for_label }}"
+                name="username"
+                value="{{ form.username.value|default:'' }}"
+                placeholder="nom_utilisateur"
+                required>
+              {% if form.username.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.username.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Prénom -->
+            <div class="mb-3">
+              <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                <i class="fas fa-name me-1"></i> Prénom
+              </label>
+              <input 
+                type="text" 
+                class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
+                id="{{ form.first_name.id_for_label }}"
+                name="first_name"
+                value="{{ form.first_name.value|default:'' }}"
+                placeholder="Jean">
+              {% if form.first_name.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.first_name.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Nom -->
+            <div class="mb-3">
+              <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                <i class="fas fa-name me-1"></i> Nom
+              </label>
+              <input 
+                type="text" 
+                class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
+                id="{{ form.last_name.id_for_label }}"
+                name="last_name"
+                value="{{ form.last_name.value|default:'' }}"
+                placeholder="Dupont">
+              {% if form.last_name.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.last_name.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Téléphone -->
+            <div class="mb-3">
+              <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                <i class="fas fa-phone me-1"></i> Téléphone
+              </label>
+              <input 
+                type="tel" 
+                class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}" 
+                id="{{ form.phone_number.id_for_label }}"
+                name="phone_number"
+                value="{{ form.phone_number.value|default:'' }}"
+                placeholder="+(261) 123456789">
+              {% if form.phone_number.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.phone_number.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Mot de passe -->
+            <div class="mb-3">
+              <label for="{{ form.password.id_for_label }}" class="form-label">
+                <i class="fas fa-lock me-1"></i> Mot de passe
+                {% if not is_create %}<small class="text-muted">(Laisser vide pour conserver)</small>{% else %}<span class="text-danger">*</span>{% endif %}
+              </label>
+              <input 
+                type="password" 
+                class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                id="{{ form.password.id_for_label }}"
+                name="password"
+                placeholder="••••••••"
+                {% if is_create %}required{% endif %}>
+              {% if form.password.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.password.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Confirmer mot de passe -->
+            <div class="mb-3">
+              <label for="{{ form.password_confirm.id_for_label }}" class="form-label">
+                <i class="fas fa-lock me-1"></i> Confirmer le mot de passe
+                {% if not is_create %}<small class="text-muted">(Laisser vide pour conserver)</small>{% else %}<span class="text-danger">*</span>{% endif %}
+              </label>
+              <input 
+                type="password" 
+                class="form-control {% if form.password_confirm.errors %}is-invalid{% endif %}" 
+                id="{{ form.password_confirm.id_for_label }}"
+                name="password_confirm"
+                placeholder="••••••••"
+                {% if is_create %}required{% endif %}>
+              {% if form.password_confirm.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.password_confirm.errors %}{{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Actif (Checkbox) -->
+            <div class="form-check mb-3">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="{{ form.is_active.id_for_label }}"
+                name="is_active"
+                {% if form.is_active.value %}checked{% endif %}>
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                <i class="fas fa-check-circle me-1 text-success"></i> Utilisateur actif
+              </label>
+            </div>
+
+            <!-- Staff (Checkbox) -->
+            <div class="form-check mb-4">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="{{ form.is_staff.id_for_label }}"
+                name="is_staff"
+                {% if form.is_staff.value %}checked{% endif %}>
+              <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                <i class="fas fa-shield-alt me-1 text-warning"></i> Accès administrateur (Staff)
+              </label>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-between">
+              <a href="{% url 'dashboard:clients' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i> Retour
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-2"></i> 
+                {% if is_create %}Créer l'utilisateur{% else %}Enregistrer les modifications{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Informations utiles -->
+      <div class="alert alert-info mt-4" role="alert">
+        <h6 class="alert-heading">
+          <i class="fas fa-info-circle me-2"></i> Informations utiles
+        </h6>
+        <ul class="mb-0">
+          <li>L'email doit être unique et valide</li>
+          <li>Le username doit être unique</li>
+          {% if not is_create %}<li>Laissez les champs mot de passe vides pour conserver le mot de passe actuel</li>{% else %}<li>Les mots de passe doivent correspondre</li>{% endif %}
+          <li>Activez "Staff" pour donner accès au tableau de bord administratif</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-label {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .form-control:focus, 
+  .form-check-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .btn-lg {
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+    }
+  }
+</style>
+
+{% endblock %}
