@@ -44,6 +44,14 @@ class Product(models.Model):
         verbose_name="Image Principale"
     )
     
+    # Indique si ce produit est décliné en tailles (S/M/L/XL etc.)
+    # Par défaut, on considère qu'un article n'a pas de taille spécifique.
+    # Le champ permet à l'administrateur de cocher "Oui" pour les vêtements.
+    has_size = models.BooleanField(
+        default=False,
+        verbose_name="Gestion des tailles"
+    )
+
     stock = models.IntegerField(verbose_name="Quantité en Stock")
     is_available = models.BooleanField(default=True, verbose_name="Disponible à la vente")
     reorder_point = models.IntegerField(default=5, verbose_name="Seuil Critique de Commande")
@@ -65,6 +73,14 @@ class Product(models.Model):
     def get_average_rating(self):
         # Utilisation de l'import global fait en haut du fichier
         return self.reviewandrating_set.filter(is_active=True).aggregate(average=Avg('rating'))['average'] or 0
+
+    @property
+    def supports_sizes(self):
+        """Retourne True si le produit gère des tailles.
+        Cette propriété est simplement un alias pour `has_size`,
+        mais facilite l'utilisation en template.
+        """
+        return self.has_size
 
     def get_url(self):
         return reverse('store:product_detail', args=[self.category.slug, self.slug])

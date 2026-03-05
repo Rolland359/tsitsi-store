@@ -64,13 +64,25 @@ def update_stock_ajax(request):
 def products_list_view(request, category_slug=None):
     categories = Category.objects.all()
     sort = request.GET.get('sort') # Récupération du paramètre de tri
-    
+
+    # --- éléments supplémentaires pour la section promotionnelle ---
+    # top 3 des meilleures ventes (calcul simple en Python en se basant
+    # sur la méthode get_times_purchased) ; si la base est grosse, on peut
+    # remplacer par une annotation/aggregation plus performante.
+    all_available = Product.objects.filter(is_available=True)
+    top_sellers = sorted(all_available, key=lambda p: p.get_times_purchased(), reverse=True)[:3]
+
+    # promotions de la semaine : ici on prend les 16 derniers produits ajoutés
+    # (placeholder), vous pouvez modifier la logique pour utiliser un champ
+    # spécifique si vous en ajoutez un plus tard.
+    weekly_promotions = all_available.order_by('-created_date')[:16]
+
     if category_slug:
         current_category = get_object_or_404(Category, slug=category_slug)
-        products = Product.objects.filter(category=current_category, is_available=True)
+        products = all_available.filter(category=current_category)
         title = current_category.name
     else:
-        products = Product.objects.filter(is_available=True)
+        products = all_available
         current_category = None
         title = "Tous les Produits"
 
@@ -94,6 +106,10 @@ def products_list_view(request, category_slug=None):
         'categories': categories,
         'page_obj': page_obj,
         'products_count': products.count(),
+        
+        # variables pour la nouvelle section
+        'top_sellers': top_sellers,
+        'weekly_promotions': weekly_promotions,
     }
     return render(request, 'store/catalogue.html', context)
 
@@ -124,6 +140,12 @@ def product_detail_view(request, category_slug, product_slug):
         # Si le produit n'existe pas ou n'est pas disponible, renvoie 404
         raise e 
         
+    # produits similaires : même catégorie, disponible et différent de celui-ci
+    similar_products = Product.objects.filter(
+        category=product.category,
+        is_available=True
+    ).exclude(id=product.id)[:8]  # on limite à 8 éléments par exemple
+
     context = {
         'product': product,
         'title': product.product_name,
@@ -131,7 +153,7 @@ def product_detail_view(request, category_slug, product_slug):
         'reviews': reviews,
         'review_form': review_form, # <-- ASSUREZ-VOUS QUE CE FORMULAIRE EST INCLUS
         'review_image_form': review_image_form,
-        # Ici, vous pourriez ajouter des produits similaires, des avis, etc.
+        'similar_products': similar_products,
     }
     
     # Le template pour la page de détail

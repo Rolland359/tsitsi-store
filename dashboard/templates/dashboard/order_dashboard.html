@@ -236,14 +236,14 @@
                                             <span class="d-none d-md-inline ms-1">Facture</span>
                                         </a>
                                         
-                                        <!-- Suppression -->
-                                        <button type="button" 
-                                                class="btn btn-outline-danger" 
-                                                onclick="deleteOrder({{ order.id }})"
-                                                title="Supprimer la commande">
-                                            <i class="fas fa-trash"></i>
-                                            <span class="d-none d-md-inline ms-1">Supp.</span>
-                                        </button>
+                                        <!-- Suppression via formulaire POST (ouverture modale) -->
+                                        <form method="post" action="{% url 'dashboard:delete_order' order.id %}" class="d-inline delete-order-form">
+                                            {% csrf_token %}
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-trigger-delete" title="Supprimer la commande">
+                                                <i class="fas fa-trash"></i>
+                                                <span class="d-none d-md-inline ms-1">Supp.</span>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -318,16 +318,41 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
+<!-- modal confirmation deletion -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Confirmer la suppression</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous certain de vouloir supprimer cette commande ? Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-    // 1. RECHERCHE AJAX
-    document.getElementById('ajaxSearch').addEventListener('keyup', function(e) {
-        fetch(`?q=${e.target.value}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
-        .then(res => res.json())
-        .then(data => { document.getElementById('orderTableBody').innerHTML = data.html; });
-    });
+    // 1. RECHERCHE AJAX (input dans le header)
+    const searchInput = document.getElementById('orderSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function(e) {
+            fetch(`?q=${encodeURIComponent(e.target.value)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('orderTableBody').innerHTML = data.html;
+                // réinitialiser le changement de statut après remplacement
+                initStatusChange();
+            });
+        });
+    }
+
 
     // 2. CHANGEMENT DE STATUT SANS RECHARGEMENT
     function initStatusChange() {
@@ -466,32 +491,7 @@
         initPerformanceChart();
     }
 
-    // 4. FONCTION SUPPRESSION COMMANDE
-    function deleteOrder(orderId) {
-        if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.')) {
-            return;
-        }
 
-        const fd = new FormData();
-        fetch(`/dashboard/orders/${orderId}/delete/`, {
-            method: 'POST',
-            body: fd,
-            headers: {'X-CSRFToken': getCookie('csrftoken')}
-        })
-                .then(r => r.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showToast(data.message || 'Commande supprimée avec succès', 'Succès', 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message || 'Erreur lors de la suppression', 'Erreur', 'danger');
-                }
-            })
-            .catch(err => {
-                console.error('Erreur:', err);
-                showToast('Erreur réseau', 'Erreur', 'danger');
-            });
-    }
 
     // Fonction pour obtenir le cookie CSRF
     function getCookie(name) {
@@ -508,6 +508,32 @@
         }
         return cookieValue;
     }
+
+    // 5. gestion de la modale de confirmation de suppression
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+        let formToSubmit = null;
+
+        document.querySelectorAll('.btn-trigger-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                formToSubmit = this.closest('form');
+                deleteModal.show();
+            });
+        });
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (formToSubmit) {
+                formToSubmit.submit();
+            }
+        });
+    });
+
+    // Affichage des messages Django via toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast('{{ message|escapejs }}', '', '{{ message.tags }}');
+        {% endfor %}
+    {% endif %}
 
 </script>
 {% endblock %}

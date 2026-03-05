@@ -43,6 +43,7 @@ class ProductAdmin(admin.ModelAdmin):
         'category',
         'modified_date',
         'is_available', # Rendre visible la disponibilité
+        'has_size', # Indique si une taille est gérée
     )
 
     # AJOUTER L'INLINE ICI
@@ -84,6 +85,7 @@ class ProductAdmin(admin.ModelAdmin):
                 'category', 
                 'description',
                 'images',
+                'has_size',
             ),
         }),
         ('Prix et Gestion de Stock', {

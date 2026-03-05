@@ -135,7 +135,7 @@
           <!-- Statut -->
           <div class="mb-4">
             <label class="form-label text-muted text-uppercase fw-bold small">Statut Actuel</label>
-            <form method="post" action="{% url 'dashboard:update_order_status' order.id %}" class="d-flex gap-2">
+            <form id="statusForm" method="post" action="{% url 'dashboard:update_order_status' order.id %}" class="d-flex gap-2">
               {% csrf_token %}
               <select name="status" class="form-select form-select-sm flex-grow-1">
                 <option value="New" {% if order.status == 'New' %}selected{% endif %}>Nouvelle</option>
@@ -203,6 +203,22 @@
   </div>
 </div>
 
+<!-- status update modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mise à jour de statut</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="statusModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   .card {
     border: none;
@@ -220,5 +236,45 @@
     }
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const statusForm = document.getElementById('statusForm');
+    if (statusForm) {
+      statusForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+        // show a simple loading state (disable btn)
+        const submitBtn = this.querySelector('button[type=submit]');
+        submitBtn.disabled = true;
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+          },
+          body: formData
+        })
+          .then(response => response.json())
+          .then(data => {
+            submitBtn.disabled = false;
+            // afficher le message dans la modal
+            const body = document.getElementById('statusModalBody');
+            body.textContent = data.message || 'Réponse reçue';
+            const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+            statusModal.show();
+          })
+          .catch(err => {
+            submitBtn.disabled = false;
+            const body = document.getElementById('statusModalBody');
+            body.textContent = 'Erreur réseau, veuillez réessayer.';
+            const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+            statusModal.show();
+          });
+      });
+    }
+  });
+</script>
 
 {% endblock %}

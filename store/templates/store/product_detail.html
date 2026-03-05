@@ -111,11 +111,18 @@
                     
                     <div class="mb-3">
                         <label for="selectSize" class="form-label fw-bold">Taille:</label>
-                        <select class="form-select" id="selectSize" name="size">
-                            <option selected>Sélectionner</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
+                        <select class="form-select {% if not product.supports_sizes %}text-muted{% endif %}" 
+                                id="selectSize" name="size"
+                                {% if not product.supports_sizes %}disabled{% endif %}>
+                            {% if product.supports_sizes %}
+                                <option selected>Sélectionner</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                            {% else %}
+                                <option selected>Taille non applicable</option>
+                            {% endif %}
                         </select>
                     </div>
 
@@ -281,7 +288,25 @@
     <div class="row mt-5">
         <div class="col-12">
             <h3 class="mb-4 fw-bold">Articles Similaires</h3>
-            <div class="alert alert-info">Bloc de produits similaires à implémenter.</div>
+            {% if similar_products %}
+                <div class="row row-cols-2 row-cols-md-4 g-3">
+                    {% for sp in similar_products %}
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <a href="{{ sp.get_url }}" class="text-decoration-none text-dark">
+                                    <img src="{{ sp.images.url }}" class="card-img-top" alt="{{ sp.product_name }}" style="height:200px; object-fit:contain;">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">{{ sp.product_name|truncatechars:25 }}</h6>
+                                        <p class="card-text text-success fw-bold mb-0">{{ sp.price|floatformat:2|intcomma }} MGA</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-secondary">Aucun produit similaire pour le moment.</div>
+            {% endif %}
         </div>
     </div>
 </div>
